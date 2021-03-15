@@ -1,25 +1,28 @@
 #= méthode exacte =#
 
 using JuMP, GLPK
-using TravelingSalesmanExact # Nécessite l'installation préalable du package TravelingSalesmanExact
+using TravelingSalesmanExact # pour des fonctions du problème du voyageur de commerce
 
 # Structure contenant les données du problème
 
+
 mutable struct donnees
-    nbVilles::Int64 # Nombre de villes (incluant le lieu de production)
+    nbClients::Int64 # Nombre de clients (y compris le dépôt)
     capacite::Int64 # Capacité du véhicule de livraison
-    demande::Vector{Int64} # Demande de chaque ville
+    demande::Vector{Int64} # Demande de chaque client
     distance::Matrix{Int64} # Distancier (Matrix{Int64} est équivalent à Array{Int64,2})
 end
 
+
 # Fonction de lecture des données du problème
+# TODO : modifier les commentaires et 3es variables
 function lecture_donnees(nom_fichier::String)
     # Ouverture d'un fichier en lecture
     f::IOStream = open(nom_fichier,"r")
 
     # Lecture de la première ligne pour connaître le nombre de villes
     s::String = readline(f) # lecture d'une ligne et stockage dans une chaîne de caractères
-    nbVilles::Int64 = parse(Int64,s) # Transformation de la chaîne de caractère en entier
+    nbClients::Int64 = parse(Int64,s) # Transformation de la chaîne de caractère en entier
 
     # Lecture de la deuxième ligne pour connaître la capacité des véhicules
 	s = readline(f)
@@ -30,8 +33,8 @@ function lecture_donnees(nom_fichier::String)
     demande::Vector{Int64} = parse.(Int64,split(s," ",keepempty = false))
 
 	# Lecture du distancier
-    distance::Matrix{Int64} = Matrix{Int64}(undef,nbVilles,nbVilles) # Allocation mémoire pour une matrice de taille nbVilles * nbVilles
-    for i in 1:nbVilles
+    distance::Matrix{Int64} = Matrix{Int64}(undef,nbClients,nbClients) # Allocation mémoire pour une matrice de taille nbClients * nbClients
+    for i in 1:nbClients
         s = readline(f)
         distance[i,:] = parse.(Int64,split(s," ",keepempty = false))
     end
@@ -40,9 +43,83 @@ function lecture_donnees(nom_fichier::String)
 	close(f)
 
     # Retour
-    return donnees(nbVilles,capacite,demande,distance)
+    return donnees(nbClients,capacite,demande,distance)
 end
 
+#=
+function model_exact(solverSelected::DataType, S::Set, nbClient::Int64)
+
+    # Déclaration d'un modèle (initialement vide)
+    m::Model = Model(solverSelected)
+
+    cardS::Int64 = size(S); # TODO : vérifier si l'appel est défini
+
+    n::Int64 = nbClient;
+
+    # Déclaration des variables de décision
+    # si on choisit la tournée indicée j dans l'ensemble S = \mathcal(S)
+    @variable(m, x[1:cardS]>=0, binary = true)
+
+    # TODO : structure de données associant S et les longueurs respectives
+
+    # Déclaration de la fonction objectif (avec le sens d'optimisation)
+    @objective(m, Min, sum(l[j]x[j] for j in 1:cardS))
+
+    # Déclaration des contraintes
+    # TODO : déclarer SetIndicesTournees[i] = S_i \subset [cardS] d'indices de tournées contenant le client i
+    @constraint(m, VisitOnceClient[2:n], sum(x[j] for j in SetIndicesTournees[i]))
+
+
+end
+=#
+
+# déterminer le minimum (sauf zéro) et son indice dans un array
+function minNonZero(a::Array{Int64,2}, S::Set)
+    tmp::Int64 = typemax(Int64) # valeur arbitrairement grande
+    ind::Int64 = 1
+    for i in S
+        if (a[i]<tmp && a[i] !== 0) # a[i] !== 0 est redondante car : a[i] == 0 <=> boucle en i. Or un tel i n'est pas dans S car il est exclu en pré-traitement (cf fonction dSC)
+            tmp = a[i]
+            ind = i
+        end
+    end
+    return tmp, ind
+end
+
+# déterminer la distance la plus courante dans un regroupement S, étant donné un distancier d
+function determineShortestCycle(S::Set, d::Matrix{Int64}) # S est l'ensemble d'indices et d est le distancier
+
+    m::Tuple{Int64,Int64} = minNonZero(d[1:1,:],S)
+    println(m)
+    dtot::Int64 = m[1] # min de la 1ere ligne pour avoir le trajet minimal de 1 vers un certain lieu i
+    k::Int64 = m[2] # récupération de l'indice concerné (lieu à visiter)
+    S = setdiff(S,[k]) # enlever le lieu visité
+    while (length(S) > 1) # tant qu'il ne reste pas qu'un seul lieu dans S
+        m = minNonZero(d[k:k,:],S)
+        println(m)
+        dtot = dtot + m[1]
+        k = m[2]
+        S = setdiff(S,[k])
+    end
+    # récupérer l'élément restant dans S (pas d'accès direct dans un Set, d'où l'utilisation d'une boucle)
+    l::Int64 = 0 # initialisation de l à l'extérieur de la boucle
+    for z in S
+        l = z
+    end
+    dtot = dtot + d[k,l] + d[l,1] # sommer les dernières distances
+    return dtot
+end
+
+function test()
+    data::donnees = lecture_donnees("exemple.dat") # fichier dans le même dossier (cf ex. du sujet)
+    d::Matrix{Int64} = data.distance
+    S::Set = Set([2,3,6])
+    dtot::Int64 = determineShortestCycle(S,d)
+    println(dtot)
+end
+
+
+#=
 # Fonction de résolution du problème du voyageur de commerce
 # Entrée : une matrice de distances
 # Sortie : un couple composé d'une séquence de visites (ne pas oublier le retour à la "première" ville) et de sa longueur
@@ -82,6 +159,8 @@ function solveEx25()
     ]
     return solveTSPExact(d)
 end
+=#
+
 
 #= Il existe plusieurs façons (plus ou moins efficaces) de réaliser les implémentations demandées.
 Des possibilités offertes par Julia sont présentées dans les quelques lignes qui suivent.
