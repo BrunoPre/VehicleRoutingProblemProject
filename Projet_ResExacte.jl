@@ -4,8 +4,6 @@ using JuMP, GLPK
 using TravelingSalesmanExact # pour des fonctions du problème du voyageur de commerce
 
 # Structure contenant les données du problème
-
-
 mutable struct donnees
     nbClients::Int64 # Nombre de clients (y compris le dépôt)
     capacite::Int64 # Capacité du véhicule de livraison
@@ -46,13 +44,12 @@ function lecture_donnees(nom_fichier::String)
     return donnees(nbClients,capacite,demande,distance)
 end
 
-#=
 function model_exact(solverSelected::DataType, S::Set, nbClient::Int64)
 
     # Déclaration d'un modèle (initialement vide)
     m::Model = Model(solverSelected)
 
-    cardS::Int64 = size(S); # TODO : vérifier si l'appel est défini
+    cardS::Int64 = length(S);
 
     n::Int64 = nbClient;
 
@@ -60,20 +57,29 @@ function model_exact(solverSelected::DataType, S::Set, nbClient::Int64)
     # si on choisit la tournée indicée j dans l'ensemble S = \mathcal(S)
     @variable(m, x[1:cardS]>=0, binary = true)
 
-    # TODO : structure de données associant S et les longueurs respectives
+    # TODO : structure de données associant S et les longueurs respectives (cf Yannick)
 
     # Déclaration de la fonction objectif (avec le sens d'optimisation)
     @objective(m, Min, sum(l[j]x[j] for j in 1:cardS))
 
     # Déclaration des contraintes
     # TODO : déclarer SetIndicesTournees[i] = S_i \subset [cardS] d'indices de tournées contenant le client i
-    @constraint(m, VisitOnceClient[2:n], sum(x[j] for j in SetIndicesTournees[i]))
-
+    @constraint(m, VisitOnlyOnceClient[2:n], sum(x[j] for j in SetIndicesTournees[i]) == 1)
 
 end
-=#
 
-# déterminer le minimum (sauf zéro) et son indice dans un array
+
+# déterminer l'ensemble de numéros de regroupements dans lesquels le client "cli" est livré
+function getSetofCyclesClient(S::Set, cli::Int64)
+    res::Set = Set([])
+    for s in S
+        if cli in s
+            res = union(res,Set([cli]))
+        end
+    end
+end
+
+# déterminer le minimum (sauf zéro) et son indice dans un array (ligne d'une matrice ou d'un array en dim 2)
 function minNonZero(a::Array{Int64,2}, S::Set)
     tmp::Int64 = typemax(Int64) # valeur arbitrairement grande
     ind::Int64 = 1
@@ -91,22 +97,25 @@ function determineShortestCycle(S::Set, d::Matrix{Int64}) # S est l'ensemble d'i
 
     m::Tuple{Int64,Int64} = minNonZero(d[1:1,:],S)
     println(m)
-    dtot::Int64 = m[1] # min de la 1ere ligne pour avoir le trajet minimal de 1 vers un certain lieu i
-    k::Int64 = m[2] # récupération de l'indice concerné (lieu à visiter)
-    S = setdiff(S,[k]) # enlever le lieu visité
-    while (length(S) > 1) # tant qu'il ne reste pas qu'un seul lieu dans S
+    dtot::Int64 = m[1]      # min de la 1ere ligne pour avoir le trajet minimal de 1 vers un certain lieu i
+    k::Int64 = m[2]         # récupération de l'indice concerné (lieu à visiter)
+    S = setdiff(S,Set([k])) # enlever le lieu visité
+    while (length(S) > 1)   # tant qu'il ne reste pas qu'un seul lieu dans S
         m = minNonZero(d[k:k,:],S)
         println(m)
         dtot = dtot + m[1]
         k = m[2]
-        S = setdiff(S,[k])
+        S = setdiff(S,Set([k]))
     end
+
     # récupérer l'élément restant dans S (pas d'accès direct dans un Set, d'où l'utilisation d'une boucle)
     l::Int64 = 0 # initialisation de l à l'extérieur de la boucle
     for z in S
         l = z
     end
+
     dtot = dtot + d[k,l] + d[l,1] # sommer les dernières distances
+
     return dtot
 end
 
