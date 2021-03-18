@@ -2,6 +2,7 @@
 
 using JuMP, GLPK
 using TravelingSalesmanExact # pour des fonctions du problème du voyageur de commerce
+using Test #Pour faire les tests
 
 # Structure contenant les données du problème
 mutable struct donnees
@@ -86,7 +87,7 @@ function getSubsets(P::Set, S::Set,capacite::Int64, demande::Vector{Int64}, inde
             S=push!(S,toadd)
             S=append!(S,getSubsets(add,S,capacite,demande,index+1,demande[i]+d))
         end
-        i+=1
+        index+=1
     end
     return S
 end
@@ -153,11 +154,20 @@ end
 
 
 function test()
+    #First test determineShortestPast
     data::donnees = lecture_donnees("exemple.dat") # fichier dans le même dossier (cf ex. du sujet)
     d::Matrix{Int64} = data.distance
     S::Set = Set([2,3,6])
     dtot::Int64 = determineShortestCycle(S,d)
     println(dtot)
+    @test dtot==787
+
+    #seconde test: get getSubsets
+    de::Vector{Int64}=[2,4,2,4,2]
+    cap::Int64=10
+    S=getSubsets(Set([]),Set([]),cap,de,0,0)
+    println(S)
+
 end
 
 
