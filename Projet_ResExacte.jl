@@ -44,6 +44,8 @@ function lecture_donnees(nom_fichier::String)
     return donnees(nbClients,capacite,demande,distance)
 end
 
+# TODO : remplacer Set par Array pour l'"ensemble" des regroupements
+
 function model_exact(solverSelected::DataType, S::Set, nbClient::Int64)
 
     # Déclaration d'un modèle (initialement vide)
@@ -52,6 +54,8 @@ function model_exact(solverSelected::DataType, S::Set, nbClient::Int64)
     cardS::Int64 = length(S);
 
     n::Int64 = nbClient;
+
+    l::Vector{Int64} = getAllShortestCycles(S,d)
 
     # Déclaration des variables de décision
     # si on choisit la tournée indicée j dans l'ensemble S = \mathcal(S)
@@ -63,8 +67,8 @@ function model_exact(solverSelected::DataType, S::Set, nbClient::Int64)
     @objective(m, Min, sum(l[j]x[j] for j in 1:cardS))
 
     # Déclaration des contraintes
-    # TODO : déclarer SetIndicesTournees[i] = S_i \subset [cardS] d'indices de tournées contenant le client i
-    @constraint(m, VisitOnlyOnceClient[2:n], sum(x[j] for j in SetIndicesTournees[i]) == 1)
+    # TODO (deprecated) : déclarer SetIndicesTournees[i] = S_i \subset [cardS] d'indices de tournées contenant le client i
+    @constraint(m, VisitOnlyOnceClient[2:n], sum(x[j] for j in getSetofCyclesClient(S,i)) == 1)
 
 end
 
@@ -118,6 +122,16 @@ function determineShortestCycle(S::Set, d::Matrix{Int64}) # S est l'ensemble d'i
 
     return dtot
 end
+
+# fournir le vecteur des longueurs de chaque regroupement
+# TODO : remplacer le type de l'ensemble des regroupements par Array (car Set n'est pas ordonné)
+function getAllShortestCycles(S::Set, d::Matrix{Int64})
+    res::Vector{Int64} = []
+    for s in S
+        res = push(res,determineShortestCycle(s,d))
+    end
+end
+
 
 function test()
     data::donnees = lecture_donnees("exemple.dat") # fichier dans le même dossier (cf ex. du sujet)
