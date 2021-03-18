@@ -12,6 +12,7 @@ mutable struct donnees
 end
 
 
+
 # Fonction de lecture des données du problème
 # TODO : modifier les commentaires et 3es variables
 function lecture_donnees(nom_fichier::String)
@@ -71,7 +72,25 @@ function model_exact(solverSelected::DataType, S::Set, nbClient::Int64)
     @constraint(m, VisitOnlyOnceClient[2:n], sum(x[j] for j in getSetofCyclesClient(S,i)) == 1)
 
 end
-
+#Fonction qui prend deux ensemble  initialement vide, la capacite de drone, 
+#une vecteur avec les demandes des endroitrs et deux integer,
+#qui doit être 0 à la debut et retourne l'ensemble S qui contient
+#tous les combinaison possible une fois 
+function getSubsets(P::Set, S::Set,capacite::Int64, demande::Vector{Int64}, index::Int64, d::Int64)
+    if index >= length(demande)
+        return S
+    end
+    while index < length(demande) 
+        if d+demande[index]<=capacite
+            toadd::Set= union(p,Set([index+2]))
+            S=push!(S,toadd)
+            S=append!(S,getSubsets(add,S,capacite,demande,index+1,demande[i]+d))
+        end
+        i+=1
+    end
+    return S
+end
+ 
 
 # déterminer l'ensemble de numéros de regroupements dans lesquels le client "cli" est livré
 function getSetofCyclesClient(S::Set, cli::Int64)
