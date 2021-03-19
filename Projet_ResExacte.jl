@@ -12,16 +12,8 @@ mutable struct donnees
     distance::Matrix{Int64} # Distancier (Matrix{Int64} est équivalent à Array{Int64,2})
 end
 
-#Structure pour le chemins
-struct chemin
-    clients::Vector{Int64}
-    longeur::Int64
-end
-
-
-
 # Fonction de lecture des données du problème
-# TODO : modifier les commentaires et 3es variables
+# TODO : modifier les commentaires et les variables
 function lecture_donnees(nom_fichier::String)
     # Ouverture d'un fichier en lecture
     f::IOStream = open(nom_fichier,"r")
@@ -52,9 +44,8 @@ function lecture_donnees(nom_fichier::String)
     return donnees(nbClients,capacite,demande,distance)
 end
 
-# TODO : remplacer Set par la structure "chemin" pour l'"ensemble" des regroupements (cf prochaine modif de Yannick)
 
-function model_exact(solverSelected::DataType, AllS_i::Vector{Any}, nbClient::Int64, l::Array{Int64})
+function model_exact(solverSelected::DataType, AllS_i::Vector{Vector{Int64}}, nbClient::Int64, l::Vector{Int64})
 
     # Déclaration d'un modèle (initialement vide)
     m::Model = Model(solverSelected)
@@ -70,8 +61,8 @@ function model_exact(solverSelected::DataType, AllS_i::Vector{Any}, nbClient::In
     # Déclaration de la fonction objectif (avec le sens d'optimisation)
     @objective(m, Min, sum(l[j]x[j] for j in 1:cardS))
 
-    # Déclaration des contraintes
-    @constraint(m, VisitOnlyOnceClient[i=2:n], sum(x[j] for j in AllS_i[i]) == 1)
+    # Déclaration des contraintes : A REPRENDRE à cause d'un pb d'index
+    @constraint(m, VisitOnlyOnceClient[i=2:n], sum(x[j] for j in AllS_i[i-1]) == 1)
 
     return m
 end
@@ -113,7 +104,7 @@ function getSetofCyclesClient(S::Vector{Vector{Int64}}, cli::Int64)
     res::Vector{Int64} = []
     for i in 1:length(S) # pour chaque regroupement...
         if cli in S[i]  # ...si notre client "cli" y appartient...
-            res = push!(res,cli)    # ...alors on ajoute l'indice de ce regroupement dans notre vecteur final
+            res = push!(res,i)    # ...alors on ajoute l'indice de ce regroupement dans notre vecteur final
         end
     end
     return res
@@ -138,17 +129,25 @@ end
 
 
 function test()
-    #First test determineShortestPast
+    #First test all subsets and respective shortest distances
     data::donnees = lecture_donnees("exemple.dat") # fichier dans le même dossier (cf ex. du sujet)
     d::Matrix{Int64} = data.distance
     capa::Int64 = data.capacite
-    #=S::Vector{Int64} = [2,3,4,6]
-    dtot::Int64 = determineShortestCycle(S,d)
-    println(dtot)    =#
-    S::Vector{Vector{Int64}} = getSubsets(capa,dmd,distancier)
+    dmd::Vector{Int64} = data.demande
+    nbClients::Int64 = data.nbClients
+    S::Vector{Vector{Int64}} = getSubsets(capa,dmd,d)
     l::Vector{Int64} = getAllShortestCycles(S,d)
+    AllS_i::Vector{Vector{Int64}} = []
+    for i in 2:nbClients
+        AllS_i = push!(AllS_i,getSetofCyclesClient(S,i))
+    end
+    #=
+    println("n=",nbClients)
     println(S)
     println(l)
+    println(AllS_i)
+    =#
+    println(AllS_i[2-1])
 
 #=
     #seconde test: get getSubsets
@@ -169,15 +168,15 @@ function data_then_solve(filename::String)
 
     data::donnees = lecture_donnees(filename)
     nbClients::Int64 = data.nbClients
-    distancier::Matrix{Int64} = data.d
+    distancier::Matrix{Int64} = data.distance
     capa::Int64 = data.capacite
-    dmd::Int64 = data.demande
+    dmd::Vector{Int64} = data.demande
 
     # déterminer l'ensemble des regroupements possibles
     S::Vector{Vector{Int64}} = getSubsets(capa,dmd,distancier)
     
     # vecteur des longueurs
-    l::Vector{Int64} = getAllShortestCycles(S,d)
+    l::Vector{Int64} = getAllShortestCycles(S,distancier)
 
     # vecteur des vecteurs des indices de tournées contenant le client i
     AllS_i::Vector{Vector{Int64}} = []
@@ -190,6 +189,32 @@ function data_then_solve(filename::String)
 
     # résolution
     optimize!(m)
+
+    # Affichage des résultats (ici assez complet pour gérer certains cas d'"erreur")
+    status = termination_status(m)
+
+    if status == MOI.OPTIMAL
+        println("Problème résolu à l'optimalité")
+
+        # Affichage de la tournée retenue
+        println("Tournées retenues : ")
+        for j in 1:length(m[:x])
+            if (value(m[:x][j])==1.0)
+                println("n°",i," : ", AllS_i[j], " de distance ", l[j])
+            end
+        end
+
+        # affichage de la valeur optimale
+        println("Distance totale minimale : z = ", objective_value(m))
+
+        println()
+
+    elseif status == MOI.INFEASIBLE
+        println("Problème non-borné")
+
+    elseif status == MOI.INFEASIBLE_OR_UNBOUNDED
+        println("Problème impossible")
+    end
 
 end
 
@@ -218,6 +243,7 @@ function solveTSPExact(d::Matrix{Int64})
     return cycle, round(Int64,l)
 end
 
+#=
 # Exemple d'application de solveTSPExact() sur le problème de l'exercice 2.5
 # Valeur retournée : ([7, 1, 5, 6, 2, 3, 4], 2575.0)
 # Cela signifie que la problème est résolu à l'optimalité avec le cycle 7 -> 1 -> 5 -> 6 -> 2 -> 3 -> 4 -> 7
@@ -234,7 +260,7 @@ function solveEx25()
     ]
     return solveTSPExact(d)
 end
-
+=#
 
 
 #= Il existe plusieurs façons (plus ou moins efficaces) de réaliser les implémentations demandées.
