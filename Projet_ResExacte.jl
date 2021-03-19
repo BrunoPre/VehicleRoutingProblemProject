@@ -53,16 +53,14 @@ end
 
 # TODO : remplacer Set par la structure "chemin" pour l'"ensemble" des regroupements (cf prochaine modif de Yannick)
 
-function model_exact(solverSelected::DataType, S::Set, nbClient::Int64)
+function model_exact(solverSelected::DataType, S::Vector{Any}, AllS_i::Vector{Any}, nbClient::Int64, l::Array{Int64})
 
     # Déclaration d'un modèle (initialement vide)
     m::Model = Model(solverSelected)
 
-    cardS::Int64 = length(S);
+    cardS::Int64 = length(AllS_i);
 
     n::Int64 = nbClient;
-
-    l::Vector{Int64} = getAllShortestCycles(S,d)
 
     # Déclaration des variables de décision
     # si on choisit la tournée indicée j dans l'ensemble S = \mathcal(S)
@@ -75,8 +73,9 @@ function model_exact(solverSelected::DataType, S::Set, nbClient::Int64)
 
     # Déclaration des contraintes
     # TODO : passer {getSetofCyclesClient(S,i) : \in [n]} dans un ensemble en paramètre
-    @constraint(m, VisitOnlyOnceClient[2:n], sum(x[j] for j in getSetofCyclesClient(S,i)) == 1)
+    @constraint(m, VisitOnlyOnceClient[i=2:n], sum(x[j] for j in AllS_i[i]) == 1)
 
+    return m
 end
 #Fonction qui prend deux ensemble  initialement vide, la capacite de drone, 
 #une vecteur avec les demandes des endroitrs et deux integer,
@@ -105,29 +104,30 @@ function getSubsets(capacite::Int64,demande::Vector{Int64}, distances::Matrix{In
 end
 
 # déterminer l'ensemble de numéros de regroupements dans lesquels le client "cli" est livré
-function getSetofCyclesClient(S::Set, cli::Int64)
-    res::Set = Set([])
-    for s in S
-        if cli in s
-            res = union(res,Set([cli]))
+function getSetofCyclesClient(S::Vector{Any}, cli::Int64)
+    res::Vector{Int64} = []
+    for i in 1:length(S) # pour chaque regroupement...
+        if cli in S[i]  # ...si notre client "cli" y appartient...
+            res = push!(res,cli)    # ...alors on ajoute l'indice de ce regroupement dans notre vecteur final
         end
     end
     return res
 end
 
-# déterminer la distance la plus courte dans un regroupement S, étant donné un distancier d
+# déterminer la distance la plus courte dans un regroupement S, étant donné un distancier d (via TSP)
 function determineShortestCycle(S::Vector{Int64}, d::Matrix{Int64}) # S est l'ensemble d'indices et d est le distancier
-    S = append!([1],S)
-    newd::Matrix{Int64} = d[S,S]
-    return solveTSPExact(newd)[2]
+    S = append!([1],S)  # ajouter 1 dans ce regroupement pour TSP
+    newd::Matrix{Int64} = d[S,S]    # on restreint le distancier au regroupement S
+    return solveTSPExact(newd)[2]   # la deuxième composante contient la distance minimale voulue
 end
 
 # fournir le vecteur des longueurs de chaque regroupement
-function getAllShortestCycles(S::Vector{Int64}, d::Matrix{Int64})
-    res::Vector{Int64} = []
-    for i in 1:length(S)
-        res = push(res,determineShortestCycle(S[i],d))
+function getAllShortestCycles(S::Vector{Any}, d::Matrix{Int64})
+    res::Vector{Int64} = [] # initialisation
+    for i in 1:length(S)    # pour chaque regroupement
+        res = push!(res,determineShortestCycle(S[i],d)) # ajouter sa distance minimale au vecteur à retourner
     end
+    return res
 end
 
 
@@ -148,7 +148,6 @@ function test()
     @testset "method tests" begin
         @test typeof(Es)==Array{Set,1}
         @test dtot == 787
-        @test 
     end;
     typeof(Es)
     for ch in Es
@@ -171,12 +170,22 @@ function data_then_solve(filename::String)
     dmd::Int64 = data.demande
 
     # déterminer l'ensemble des regroupements possibles
-
-    S::Set = getSubsets(capa,dmd)   # changer le type
+    S::Set = getSubsets(capa,dmd,distancier)   # changer le type
     
+    # vecteur des longueurs
+    l::Vector{Int64} = getAllShortestCycles(S,d)
 
+    # vecteur des vecteurs des indices de tournées contenant le client i
+    AllS_i::Vector{Vector{Int64}} = []
+    for i in 2:nbClients
+        AllS_i = push!(AllS_i,getSetofCyclesClient(S,i))
+    end
 
+    # création du modèle à partir des données
+    m::Model = model_exact(GLPK.Optimizer,S,AllS_i,nbClients,l)
 
+    # résolution
+    optimize!(m)
 
 end
 
