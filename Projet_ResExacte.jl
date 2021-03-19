@@ -77,21 +77,24 @@ end
 #une vecteur avec les demandes des endroitrs et deux integer,
 #qui doit être 0 à la debut et retourne l'ensemble S qui contient
 #tous les combinaison possible une fois 
-function getSubsets(P::Set, S::Set,capacite::Int64, demande::Vector{Int64}, index::Int64, d::Int64)
-    if index >= length(demande)
+function getSubsets_recursive(P::Set, S::Set,capacite::Int64, demande::Vector{Int64}, index::Int64, d::Int64)
+    if index > length(demande)
         return S
     end
-    while index < length(demande) 
+    while index <= length(demande) 
         if d+demande[index]<=capacite
-            toadd::Set= union(p,Set([index+2]))
+            toadd::Set= union(P,Set([index+1]))
             S=push!(S,toadd)
-            S=append!(S,getSubsets(add,S,capacite,demande,index+1,demande[i]+d))
+            S=union(S,getSubsets_recursive(toadd,S,capacite,demande,index+1,demande[index]+d))
         end
         index+=1
     end
     return S
 end
- 
+#wrapper pour la méthod getSubsets_recursive
+function getSubsets(capacite::Int64,demande::Vector{Int64})
+    return collect(getSubsets_recursive(Set([]),Set([]),capacite,demande,1,0))
+end
 
 # déterminer l'ensemble de numéros de regroupements dans lesquels le client "cli" est livré
 function getSetofCyclesClient(S::Set, cli::Int64)
@@ -160,14 +163,17 @@ function test()
     S::Set = Set([2,3,6])
     dtot::Int64 = determineShortestCycle(S,d)
     println(dtot)
-    @test dtot==787
+    
 
     #seconde test: get getSubsets
     de::Vector{Int64}=[2,4,2,4,2]
     cap::Int64=10
-    S=getSubsets(Set([]),Set([]),cap,de,0,0)
-    println(S)
-
+    Es::Array{Set}=getSubsets(cap,de)
+    
+    @testset "method tests" begin
+        @test typeof(Es)==Array{Set,1}
+        @test dtot == 787
+    end;
 end
 
 
