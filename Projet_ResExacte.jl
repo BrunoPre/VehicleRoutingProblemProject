@@ -81,17 +81,19 @@ end
 #qui doit être 0 à la debut et retourne l'ensemble S qui contient
 #tous les combinaison possible une fois 
 function getSubsets_recursive(P::Vector{Int64}, S::Vector{Vector{Int64}},capacite::Int64, demande::Vector{Int64}, index::Int64, d::Int64, distances::Matrix{Int64})
+    #Arreter la recursion si on est à la fin d'index et retour S
     if index > length(demande)
-        return S
+        return S                        
     end
+    #buckle sur tout les demandes de clients
     while index <= length(demande) 
-        if d+demande[index]<=capacite
-            toadd::Vector{Int64}= copy(P)
-            toadd=append!(toadd,index+1)
-            S=vcat(S,[toadd])
-            Snew::Vector{Vector{Int64}}=getSubsets_recursive(toadd,S,capacite,demande,index+1,demande[index]+d,distances)
-            if length(S)<length(Snew)
-                S=vcat(S,Snew[length(S)+1:length(Snew)])
+        if d+demande[index]<=capacite                                                                                       
+            toadd::Vector{Int64}= copy(P)                   #Copy P pour avoir un nouveau tableau et les changements dans toadd ne soit pas transfere à Par 
+            toadd=append!(toadd,index+1)                     #Comme demande des elements dans P et demande[index] sont ensemble plus petite que la capacité on construit l'union de les deux
+            S=vcat(S,[toadd])                                 #On ajoute cette union dans S
+            Snew::Vector{Vector{Int64}}=getSubsets_recursive(toadd,S,capacite,demande,index+1,demande[index]+d,distances)  #appelle recursive avec cette union le nouveau demande est la demande de tous elements dans toadd et on augmenter l'index avec 1 parce que on veut pas considere le même element
+            if length(S)<length(Snew)                         #On veut seulement ajoute le fin de resultat de l'apelle recursice si les deux arrays sont pas egale
+                S=vcat(S,Snew[length(S)+1:length(Snew)])        #Si ils sont pas égale on append le part d'array de l'appelle récursive qui est nouveau 
             end
         end
         index+=1
