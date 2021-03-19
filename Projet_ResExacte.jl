@@ -13,7 +13,7 @@ mutable struct donnees
 end
 #Structure pour le chemins
 struct chemin
-    clients::Set
+    clients::Vector{Int64}
     longeur::Int64
 end
 
@@ -81,26 +81,30 @@ end
 #une vecteur avec les demandes des endroitrs et deux integer,
 #qui doit être 0 à la debut et retourne l'ensemble S qui contient
 #tous les combinaison possible une fois 
-function getSubsets_recursive(P::chemin, S::Set,capacite::Int64, demande::Vector{Int64}, index::Int64, d::Int64, distances::Matrix{Int64})
+function getSubsets_recursive(P::Vector{Int64}, S::Vector{Vector{Int64}},capacite::Int64, demande::Vector{Int64}, index::Int64, d::Int64, distances::Matrix{Int64})
     if index > length(demande)
         return S
     end
     while index <= length(demande) 
         if d+demande[index]<=capacite
-            toadd::Set= union(P.clients,Set([index+1]))
-            print(toadd)
-            chemin_to_add=chemin(toadd,determineShortestCycle(toadd,distances))
-            S=push!(S,chemin_toadd)
-            S=union(S,getSubsets_recursive(chemin_toadd,S,capacite,demande,index+1,demande[index]+d))
+            toadd::Vector{Int64}= copy(P)
+            toadd=append!(toadd,index+1)
+            S=vcat(S,[toadd])
+            Snew::Vector{Vector{Int64}}=getSubsets_recursive(toadd,S,capacite,demande,index+1,demande[index]+d,distances)
+            if length(S)<length(Snew)
+                S=vcat(S,Snew[length(S)+1:length(Snew)])
+            end
         end
         index+=1
     end
     return S
 end
+
 #wrapper pour la méthod getSubsets_recursive
 function getSubsets(capacite::Int64,demande::Vector{Int64}, distances::Matrix{Int64})
-    ch::chemin=chemin(Set([]),0)
-    return collect(getSubsets_recursive(ch,Set([]),capacite,demande,1,0,distances))
+    P::Vector{Int64}=[]
+    S::Vector{Vector{Int64}}=[]
+    return collect(getSubsets_recursive(P,S,capacite,demande,1,0,distances))
 end
 
 # déterminer l'ensemble de numéros de regroupements dans lesquels le client "cli" est livré
@@ -114,11 +118,59 @@ function getSetofCyclesClient(S::Vector{Any}, cli::Int64)
     return res
 end
 
+<<<<<<< HEAD
 # déterminer la distance la plus courte dans un regroupement S, étant donné un distancier d (via TSP)
 function determineShortestCycle(S::Vector{Int64}, d::Matrix{Int64}) # S est l'ensemble d'indices et d est le distancier
     S = append!([1],S)  # ajouter 1 dans ce regroupement pour TSP
     newd::Matrix{Int64} = d[S,S]    # on restreint le distancier au regroupement S
     return solveTSPExact(newd)[2]   # la deuxième composante contient la distance minimale voulue
+=======
+<<<<<<< HEAD
+# déterminer le minimum (sauf zéro) et son indice dans un array (ligne d'une matrice ou d'un array en dim 2)
+function minNonZero(a::Array{Int64,2}, S::Vector{Int64})
+    tmp::Int64 = typemax(Int64) # valeur arbitrairement grande
+    ind::Int64 = 1
+    for i in S
+        if (a[i]<tmp && a[i] !== 0) # a[i] !== 0 est redondante car : a[i] == 0 <=> boucle en i. Or un tel i n'est pas dans S car il est exclu en pré-traitement (cf fonction dSC)
+            tmp = a[i]
+            ind = i
+        end
+    end
+    return tmp, ind
+end
+
+# déterminer la distance la plus courante dans un regroupement S, étant donné un distancier d
+function determineShortestCycle(S::Vector{Int64}, d::Matrix{Int64}) # S est l'ensemble d'indices et d est le distancier
+
+    m::Tuple{Int64,Int64} = minNonZero(d[1:1,:],S)
+    #println(m)
+    dtot::Int64 = m[1]      # min de la 1ere ligne pour avoir le trajet minimal de 1 vers un certain lieu i
+    k::Int64 = m[2]         # récupération de l'indice concerné (lieu à visiter)
+    S = setdiff(S,Set([k])) # enlever le lieu visité
+    while (length(S) > 1)   # tant qu'il ne reste pas qu'un seul lieu dans S
+        m = minNonZero(d[k:k,:],S)
+        #println(m)
+        dtot = dtot + m[1]
+        k = m[2]
+        S = setdiff(S,Set([k]))
+    end
+
+    # récupérer l'élément restant dans S (pas d'accès direct dans un Set, d'où l'utilisation d'une boucle)
+    for z in S
+        l::Int64 = z
+    end
+
+    dtot = dtot + d[k,l] + d[l,1] # sommer les dernières distances
+
+    return dtot
+=======
+# déterminer la distance la plus courte dans un regroupement S, étant donné un distancier d
+function determineShortestCycle(S::Vector{Int64}, d::Matrix{Int64}) # S est l'ensemble d'indices et d est le distancier
+    S = append!([1],S)
+    newd::Matrix{Int64} = d[S,S]
+    return solveTSPExact(newd)[2]
+>>>>>>> 51f3e7f94864de7a4aaa0251579cb9cb447ce78b
+>>>>>>> 5697ddf16c81915176e16c2ee4febd27ed714378
 end
 
 # fournir le vecteur des longueurs de chaque regroupement
@@ -137,26 +189,29 @@ function test()
     d::Matrix{Int64} = data.distance
     S::Vector{Int64} = [2,3,4,6]
     dtot::Int64 = determineShortestCycle(S,d)
+<<<<<<< HEAD
+    #println(dtot)
+    
+=======
     println(dtot)    
+>>>>>>> 51f3e7f94864de7a4aaa0251579cb9cb447ce78b
 
 
 
     #seconde test: get getSubsets
     de::Vector{Int64}=[2,4,2,4,2]
     cap::Int64=10
-    Es::Array{chemin}=getSubsets(cap,de,d)  
+    testset::Set=Set([2])
+    Es::Array{Array{Int64}}=getSubsets(cap,de,d)  
     @testset "method tests" begin
+<<<<<<< HEAD
         @test typeof(Es)==Array{Set,1}
         @test dtot == 787
+=======
+       @test determineShortestCycle(Set)
+>>>>>>> 5697ddf16c81915176e16c2ee4febd27ed714378
     end;
-    typeof(Es)
-    for ch in Es
-        typeof(ch)
-        #print("Clients:")
-        #print(ch.clients)
-        #print("longeur:")
-        #print(ch.longeur)
-    end
+    print(Es)
 end
 
 
