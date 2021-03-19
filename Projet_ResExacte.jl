@@ -13,7 +13,7 @@ mutable struct donnees
 end
 #Structure pour le chemins
 struct chemin
-    clients::Set
+    clients::Vector{Int64}
     longeur::Int64
 end
 
@@ -82,26 +82,30 @@ end
 #une vecteur avec les demandes des endroitrs et deux integer,
 #qui doit être 0 à la debut et retourne l'ensemble S qui contient
 #tous les combinaison possible une fois 
-function getSubsets_recursive(P::chemin, S::Set,capacite::Int64, demande::Vector{Int64}, index::Int64, d::Int64, distances::Matrix{Int64})
+function getSubsets_recursive(P::Vector{Int64}, S::Vector{Vector{Int64}},capacite::Int64, demande::Vector{Int64}, index::Int64, d::Int64, distances::Matrix{Int64})
     if index > length(demande)
         return S
     end
     while index <= length(demande) 
         if d+demande[index]<=capacite
-            toadd::Set= union(P.clients,Set([index+1]))
-            print(toadd)
-            chemin_to_add=chemin(toadd,determineShortestCycle(toadd,distances))
-            S=push!(S,chemin_toadd)
-            S=union(S,getSubsets_recursive(chemin_toadd,S,capacite,demande,index+1,demande[index]+d))
+            toadd::Vector{Int64}= copy(P)
+            toadd=append!(toadd,index+1)
+            S=vcat(S,[toadd])
+            Snew::Vector{Vector{Int64}}=getSubsets_recursive(toadd,S,capacite,demande,index+1,demande[index]+d,distances)
+            if length(S)<length(Snew)
+                S=vcat(S,Snew[length(S)+1:length(Snew)])
+            end
         end
         index+=1
     end
     return S
 end
+
 #wrapper pour la méthod getSubsets_recursive
 function getSubsets(capacite::Int64,demande::Vector{Int64}, distances::Matrix{Int64})
-    ch::chemin=chemin(Set([]),0)
-    return collect(getSubsets_recursive(ch,Set([]),capacite,demande,1,0,distances))
+    P::Vector{Int64}=[]
+    S::Vector{Vector{Int64}}=[]
+    return collect(getSubsets_recursive(P,S,capacite,demande,1,0,distances))
 end
 
 # déterminer l'ensemble de numéros de regroupements dans lesquels le client "cli" est livré
@@ -115,7 +119,7 @@ function getSetofCyclesClient(S::Set, cli::Int64)
 end
 
 # déterminer le minimum (sauf zéro) et son indice dans un array (ligne d'une matrice ou d'un array en dim 2)
-function minNonZero(a::Array{Int64,2}, S::Set)
+function minNonZero(a::Array{Int64,2}, S::Vector{Int64})
     tmp::Int64 = typemax(Int64) # valeur arbitrairement grande
     ind::Int64 = 1
     for i in S
@@ -128,16 +132,16 @@ function minNonZero(a::Array{Int64,2}, S::Set)
 end
 
 # déterminer la distance la plus courante dans un regroupement S, étant donné un distancier d
-function determineShortestCycle(S::Set, d::Matrix{Int64}) # S est l'ensemble d'indices et d est le distancier
+function determineShortestCycle(S::Vector{Int64}, d::Matrix{Int64}) # S est l'ensemble d'indices et d est le distancier
 
     m::Tuple{Int64,Int64} = minNonZero(d[1:1,:],S)
-    println(m)
+    #println(m)
     dtot::Int64 = m[1]      # min de la 1ere ligne pour avoir le trajet minimal de 1 vers un certain lieu i
     k::Int64 = m[2]         # récupération de l'indice concerné (lieu à visiter)
     S = setdiff(S,Set([k])) # enlever le lieu visité
     while (length(S) > 1)   # tant qu'il ne reste pas qu'un seul lieu dans S
         m = minNonZero(d[k:k,:],S)
-        println(m)
+        #println(m)
         dtot = dtot + m[1]
         k = m[2]
         S = setdiff(S,Set([k]))
@@ -170,7 +174,7 @@ function test()
     d::Matrix{Int64} = data.distance
     S::Set = Set([2,3,6])
     dtot::Int64 = determineShortestCycle(S,d)
-    println(dtot)
+    #println(dtot)
     
 
 
@@ -178,20 +182,12 @@ function test()
     #seconde test: get getSubsets
     de::Vector{Int64}=[2,4,2,4,2]
     cap::Int64=10
-    Es::Array{chemin}=getSubsets(cap,de,d)  
+    testset::Set=Set([2])
+    Es::Array{Array{Int64}}=getSubsets(cap,de,d)  
     @testset "method tests" begin
-        @test typeof(Es)==Array{Set,1}
-        @test dtot == 787
-        @test 
+       @test determineShortestCycle(Set)
     end;
-    typeof(Es)
-    for ch in Es
-        typeof(ch)
-        #print("Clients:")
-        #print(ch.clients)
-        #print("longeur:")
-        #print(ch.longeur)
-    end
+    print(Es)
 end
 
 
