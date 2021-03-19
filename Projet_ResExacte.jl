@@ -118,59 +118,12 @@ function getSetofCyclesClient(S::Vector{Any}, cli::Int64)
     return res
 end
 
-<<<<<<< HEAD
-# déterminer la distance la plus courte dans un regroupement S, étant donné un distancier d (via TSP)
-function determineShortestCycle(S::Vector{Int64}, d::Matrix{Int64}) # S est l'ensemble d'indices et d est le distancier
-    S = append!([1],S)  # ajouter 1 dans ce regroupement pour TSP
-    newd::Matrix{Int64} = d[S,S]    # on restreint le distancier au regroupement S
-    return solveTSPExact(newd)[2]   # la deuxième composante contient la distance minimale voulue
-=======
-<<<<<<< HEAD
-# déterminer le minimum (sauf zéro) et son indice dans un array (ligne d'une matrice ou d'un array en dim 2)
-function minNonZero(a::Array{Int64,2}, S::Vector{Int64})
-    tmp::Int64 = typemax(Int64) # valeur arbitrairement grande
-    ind::Int64 = 1
-    for i in S
-        if (a[i]<tmp && a[i] !== 0) # a[i] !== 0 est redondante car : a[i] == 0 <=> boucle en i. Or un tel i n'est pas dans S car il est exclu en pré-traitement (cf fonction dSC)
-            tmp = a[i]
-            ind = i
-        end
-    end
-    return tmp, ind
-end
 
-# déterminer la distance la plus courante dans un regroupement S, étant donné un distancier d
-function determineShortestCycle(S::Vector{Int64}, d::Matrix{Int64}) # S est l'ensemble d'indices et d est le distancier
-
-    m::Tuple{Int64,Int64} = minNonZero(d[1:1,:],S)
-    #println(m)
-    dtot::Int64 = m[1]      # min de la 1ere ligne pour avoir le trajet minimal de 1 vers un certain lieu i
-    k::Int64 = m[2]         # récupération de l'indice concerné (lieu à visiter)
-    S = setdiff(S,Set([k])) # enlever le lieu visité
-    while (length(S) > 1)   # tant qu'il ne reste pas qu'un seul lieu dans S
-        m = minNonZero(d[k:k,:],S)
-        #println(m)
-        dtot = dtot + m[1]
-        k = m[2]
-        S = setdiff(S,Set([k]))
-    end
-
-    # récupérer l'élément restant dans S (pas d'accès direct dans un Set, d'où l'utilisation d'une boucle)
-    for z in S
-        l::Int64 = z
-    end
-
-    dtot = dtot + d[k,l] + d[l,1] # sommer les dernières distances
-
-    return dtot
-=======
 # déterminer la distance la plus courte dans un regroupement S, étant donné un distancier d
 function determineShortestCycle(S::Vector{Int64}, d::Matrix{Int64}) # S est l'ensemble d'indices et d est le distancier
     S = append!([1],S)
     newd::Matrix{Int64} = d[S,S]
     return solveTSPExact(newd)[2]
->>>>>>> 51f3e7f94864de7a4aaa0251579cb9cb447ce78b
->>>>>>> 5697ddf16c81915176e16c2ee4febd27ed714378
 end
 
 # fournir le vecteur des longueurs de chaque regroupement
@@ -189,12 +142,7 @@ function test()
     d::Matrix{Int64} = data.distance
     S::Vector{Int64} = [2,3,4,6]
     dtot::Int64 = determineShortestCycle(S,d)
-<<<<<<< HEAD
-    #println(dtot)
-    
-=======
     println(dtot)    
->>>>>>> 51f3e7f94864de7a4aaa0251579cb9cb447ce78b
 
 
 
@@ -204,12 +152,7 @@ function test()
     testset::Set=Set([2])
     Es::Array{Array{Int64}}=getSubsets(cap,de,d)  
     @testset "method tests" begin
-<<<<<<< HEAD
-        @test typeof(Es)==Array{Set,1}
-        @test dtot == 787
-=======
        @test determineShortestCycle(Set)
->>>>>>> 5697ddf16c81915176e16c2ee4febd27ed714378
     end;
     print(Es)
 end
