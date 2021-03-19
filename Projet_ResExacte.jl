@@ -112,53 +112,21 @@ function getSetofCyclesClient(S::Set, cli::Int64)
             res = union(res,Set([cli]))
         end
     end
+    return res
 end
 
-# déterminer le minimum (sauf zéro) et son indice dans un array (ligne d'une matrice ou d'un array en dim 2)
-function minNonZero(a::Array{Int64,2}, S::Set)
-    tmp::Int64 = typemax(Int64) # valeur arbitrairement grande
-    ind::Int64 = 1
-    for i in S
-        if (a[i]<tmp && a[i] !== 0) # a[i] !== 0 est redondante car : a[i] == 0 <=> boucle en i. Or un tel i n'est pas dans S car il est exclu en pré-traitement (cf fonction dSC)
-            tmp = a[i]
-            ind = i
-        end
-    end
-    return tmp, ind
-end
-
-# déterminer la distance la plus courante dans un regroupement S, étant donné un distancier d
-function determineShortestCycle(S::Set, d::Matrix{Int64}) # S est l'ensemble d'indices et d est le distancier
-
-    m::Tuple{Int64,Int64} = minNonZero(d[1:1,:],S)
-    println(m)
-    dtot::Int64 = m[1]      # min de la 1ere ligne pour avoir le trajet minimal de 1 vers un certain lieu i
-    k::Int64 = m[2]         # récupération de l'indice concerné (lieu à visiter)
-    S = setdiff(S,Set([k])) # enlever le lieu visité
-    while (length(S) > 1)   # tant qu'il ne reste pas qu'un seul lieu dans S
-        m = minNonZero(d[k:k,:],S)
-        println(m)
-        dtot = dtot + m[1]
-        k = m[2]
-        S = setdiff(S,Set([k]))
-    end
-
-    # récupérer l'élément restant dans S (pas d'accès direct dans un Set, d'où l'utilisation d'une boucle)
-    for z in S
-        l::Int64 = z
-    end
-
-    dtot = dtot + d[k,l] + d[l,1] # sommer les dernières distances
-
-    return dtot
+# déterminer la distance la plus courte dans un regroupement S, étant donné un distancier d
+function determineShortestCycle(S::Vector{Int64}, d::Matrix{Int64}) # S est l'ensemble d'indices et d est le distancier
+    S = append!([1],S)
+    newd::Matrix{Int64} = d[S,S]
+    return solveTSPExact(newd)[2]
 end
 
 # fournir le vecteur des longueurs de chaque regroupement
-# TODO : remplacer le type de l'ensemble des regroupements par Array (car Set n'est pas ordonné)
-function getAllShortestCycles(S::Set, d::Matrix{Int64})
+function getAllShortestCycles(S::Vector{Int64}, d::Matrix{Int64})
     res::Vector{Int64} = []
-    for s in S
-        res = push(res,determineShortestCycle(s,d))
+    for i in 1:length(S)
+        res = push(res,determineShortestCycle(S[i],d))
     end
 end
 
@@ -167,10 +135,9 @@ function test()
     #First test determineShortestPast
     data::donnees = lecture_donnees("exemple.dat") # fichier dans le même dossier (cf ex. du sujet)
     d::Matrix{Int64} = data.distance
-    S::Set = Set([2,3,6])
+    S::Vector{Int64} = [2,3,4,6]
     dtot::Int64 = determineShortestCycle(S,d)
-    println(dtot)
-    
+    println(dtot)    
 
 
 
@@ -214,7 +181,7 @@ function data_then_solve(filename::String)
 end
 
 
-#=
+
 # Fonction de résolution du problème du voyageur de commerce
 # Entrée : une matrice de distances
 # Sortie : un couple composé d'une séquence de visites (ne pas oublier le retour à la "première" ville) et de sa longueur
@@ -254,7 +221,7 @@ function solveEx25()
     ]
     return solveTSPExact(d)
 end
-=#
+
 
 
 #= Il existe plusieurs façons (plus ou moins efficaces) de réaliser les implémentations demandées.
