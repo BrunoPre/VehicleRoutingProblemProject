@@ -11,6 +11,7 @@ mutable struct donnees
     demande::Vector{Int64} # Demande de chaque client
     distance::Matrix{Int64} # Distancier (Matrix{Int64} est équivalent à Array{Int64,2})
 end
+
 #Structure pour le chemins
 struct chemin
     clients::Vector{Int64}
@@ -53,7 +54,7 @@ end
 
 # TODO : remplacer Set par la structure "chemin" pour l'"ensemble" des regroupements (cf prochaine modif de Yannick)
 
-function model_exact(solverSelected::DataType, S::Vector{Any}, AllS_i::Vector{Any}, nbClient::Int64, l::Array{Int64})
+function model_exact(solverSelected::DataType, AllS_i::Vector{Any}, nbClient::Int64, l::Array{Int64})
 
     # Déclaration d'un modèle (initialement vide)
     m::Model = Model(solverSelected)
@@ -66,17 +67,15 @@ function model_exact(solverSelected::DataType, S::Vector{Any}, AllS_i::Vector{An
     # si on choisit la tournée indicée j dans l'ensemble S = \mathcal(S)
     @variable(m, x[1:cardS]>=0, binary = true)
 
-    # TODO : structure de données associant S et les longueurs respectives (cf Yannick)
-
     # Déclaration de la fonction objectif (avec le sens d'optimisation)
     @objective(m, Min, sum(l[j]x[j] for j in 1:cardS))
 
     # Déclaration des contraintes
-    # TODO : passer {getSetofCyclesClient(S,i) : \in [n]} dans un ensemble en paramètre
     @constraint(m, VisitOnlyOnceClient[i=2:n], sum(x[j] for j in AllS_i[i]) == 1)
 
     return m
 end
+
 #Fonction qui prend deux ensemble  initialement vide, la capacite de drone, 
 #une vecteur avec les demandes des endroitrs et deux integer,
 #qui doit être 0 à la debut et retourne l'ensemble S qui contient
@@ -108,7 +107,7 @@ function getSubsets(capacite::Int64,demande::Vector{Int64}, distances::Matrix{In
 end
 
 # déterminer l'ensemble de numéros de regroupements dans lesquels le client "cli" est livré
-function getSetofCyclesClient(S::Vector{Any}, cli::Int64)
+function getSetofCyclesClient(S::Vector{Vector{Int64}}, cli::Int64)
     res::Vector{Int64} = []
     for i in 1:length(S) # pour chaque regroupement...
         if cli in S[i]  # ...si notre client "cli" y appartient...
@@ -119,15 +118,15 @@ function getSetofCyclesClient(S::Vector{Any}, cli::Int64)
 end
 
 
-# déterminer la distance la plus courte dans un regroupement S, étant donné un distancier d
-function determineShortestCycle(S::Vector{Int64}, d::Matrix{Int64}) # S est l'ensemble d'indices et d est le distancier
-    S = append!([1],S)
-    newd::Matrix{Int64} = d[S,S]
+# déterminer la distance la plus courte dans un regroupement Si, étant donné un distancier d
+function determineShortestCycle(Si::Vector{Int64}, d::Matrix{Int64}) # S est l'ensemble d'indices et d est le distancier
+    Si = append!([1],Si)
+    newd::Matrix{Int64} = d[Si,Si]
     return solveTSPExact(newd)[2]
 end
 
-# fournir le vecteur des longueurs de chaque regroupement
-function getAllShortestCycles(S::Vector{Any}, d::Matrix{Int64})
+# fournir le vecteur des longueurs de chaque regroupement dans S
+function getAllShortestCycles(S::Vector{Vector{Int64}}, d::Matrix{Int64})
     res::Vector{Int64} = [] # initialisation
     for i in 1:length(S)    # pour chaque regroupement
         res = push!(res,determineShortestCycle(S[i],d)) # ajouter sa distance minimale au vecteur à retourner
@@ -140,12 +139,16 @@ function test()
     #First test determineShortestPast
     data::donnees = lecture_donnees("exemple.dat") # fichier dans le même dossier (cf ex. du sujet)
     d::Matrix{Int64} = data.distance
-    S::Vector{Int64} = [2,3,4,6]
+    capa::Int64 = data.capacite
+    #=S::Vector{Int64} = [2,3,4,6]
     dtot::Int64 = determineShortestCycle(S,d)
-    println(dtot)    
+    println(dtot)    =#
+    S::Vector{Vector{Int64}} = getSubsets(capa,dmd,distancier)
+    l::Vector{Int64} = getAllShortestCycles(S,d)
+    println(S)
+    println(l)
 
-
-
+#=
     #seconde test: get getSubsets
     de::Vector{Int64}=[2,4,2,4,2]
     cap::Int64=10
@@ -155,6 +158,7 @@ function test()
        @test determineShortestCycle(Set)
     end;
     print(Es)
+    =#
 end
 
 
@@ -168,7 +172,7 @@ function data_then_solve(filename::String)
     dmd::Int64 = data.demande
 
     # déterminer l'ensemble des regroupements possibles
-    S::Set = getSubsets(capa,dmd,distancier)   # changer le type
+    S::Vector{Vector{Int64}} = getSubsets(capa,dmd,distancier)
     
     # vecteur des longueurs
     l::Vector{Int64} = getAllShortestCycles(S,d)
@@ -180,7 +184,7 @@ function data_then_solve(filename::String)
     end
 
     # création du modèle à partir des données
-    m::Model = model_exact(GLPK.Optimizer,S,AllS_i,nbClients,l)
+    m::Model = model_exact(GLPK.Optimizer,AllS_i,nbClients,l)
 
     # résolution
     optimize!(m)
