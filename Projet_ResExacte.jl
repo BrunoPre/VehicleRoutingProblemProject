@@ -116,8 +116,10 @@ function getSetofCyclesClient(S::Set, cli::Int64)
             res = union(res,Set([cli]))
         end
     end
+    return res
 end
 
+<<<<<<< HEAD
 # déterminer le minimum (sauf zéro) et son indice dans un array (ligne d'une matrice ou d'un array en dim 2)
 function minNonZero(a::Array{Int64,2}, S::Vector{Int64})
     tmp::Int64 = typemax(Int64) # valeur arbitrairement grande
@@ -155,14 +157,20 @@ function determineShortestCycle(S::Vector{Int64}, d::Matrix{Int64}) # S est l'en
     dtot = dtot + d[k,l] + d[l,1] # sommer les dernières distances
 
     return dtot
+=======
+# déterminer la distance la plus courte dans un regroupement S, étant donné un distancier d
+function determineShortestCycle(S::Vector{Int64}, d::Matrix{Int64}) # S est l'ensemble d'indices et d est le distancier
+    S = append!([1],S)
+    newd::Matrix{Int64} = d[S,S]
+    return solveTSPExact(newd)[2]
+>>>>>>> 51f3e7f94864de7a4aaa0251579cb9cb447ce78b
 end
 
 # fournir le vecteur des longueurs de chaque regroupement
-# TODO : remplacer le type de l'ensemble des regroupements par Array (car Set n'est pas ordonné)
-function getAllShortestCycles(S::Set, d::Matrix{Int64})
+function getAllShortestCycles(S::Vector{Int64}, d::Matrix{Int64})
     res::Vector{Int64} = []
-    for s in S
-        res = push(res,determineShortestCycle(s,d))
+    for i in 1:length(S)
+        res = push(res,determineShortestCycle(S[i],d))
     end
 end
 
@@ -171,10 +179,14 @@ function test()
     #First test determineShortestPast
     data::donnees = lecture_donnees("exemple.dat") # fichier dans le même dossier (cf ex. du sujet)
     d::Matrix{Int64} = data.distance
-    S::Set = Set([2,3,6])
+    S::Vector{Int64} = [2,3,4,6]
     dtot::Int64 = determineShortestCycle(S,d)
+<<<<<<< HEAD
     #println(dtot)
     
+=======
+    println(dtot)    
+>>>>>>> 51f3e7f94864de7a4aaa0251579cb9cb447ce78b
 
 
 
@@ -210,7 +222,7 @@ function data_then_solve(filename::String)
 end
 
 
-#=
+
 # Fonction de résolution du problème du voyageur de commerce
 # Entrée : une matrice de distances
 # Sortie : un couple composé d'une séquence de visites (ne pas oublier le retour à la "première" ville) et de sa longueur
@@ -250,7 +262,7 @@ function solveEx25()
     ]
     return solveTSPExact(d)
 end
-=#
+
 
 
 #= Il existe plusieurs façons (plus ou moins efficaces) de réaliser les implémentations demandées.
