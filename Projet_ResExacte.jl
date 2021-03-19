@@ -51,7 +51,7 @@ function lecture_donnees(nom_fichier::String)
     return donnees(nbClients,capacite,demande,distance)
 end
 
-# TODO : remplacer Set par Array pour l'"ensemble" des regroupements
+# TODO : remplacer Set par la structure "chemin" pour l'"ensemble" des regroupements (cf prochaine modif de Yannick)
 
 function model_exact(solverSelected::DataType, S::Set, nbClient::Int64)
 
@@ -74,7 +74,7 @@ function model_exact(solverSelected::DataType, S::Set, nbClient::Int64)
     @objective(m, Min, sum(l[j]x[j] for j in 1:cardS))
 
     # Déclaration des contraintes
-    # TODO (deprecated) : déclarer SetIndicesTournees[i] = S_i \subset [cardS] d'indices de tournées contenant le client i
+    # TODO : passer {getSetofCyclesClient(S,i) : \in [n]} dans un ensemble en paramètre
     @constraint(m, VisitOnlyOnceClient[2:n], sum(x[j] for j in getSetofCyclesClient(S,i)) == 1)
 
 end
@@ -148,9 +148,8 @@ function determineShortestCycle(S::Vector{Int64}, d::Matrix{Int64}) # S est l'en
     end
 
     # récupérer l'élément restant dans S (pas d'accès direct dans un Set, d'où l'utilisation d'une boucle)
-    l::Int64 = 0 # initialisation de l à l'extérieur de la boucle
     for z in S
-        l = z
+        l::Int64 = z
     end
 
     dtot = dtot + d[k,l] + d[l,1] # sommer les dernières distances
@@ -188,6 +187,26 @@ function test()
        @test determineShortestCycle(Set)
     end;
     print(Es)
+end
+
+
+function data_then_solve(filename::String)
+    # Conversion fichier -> structures de données
+
+    data::donnees = lecture_donnees(filename)
+    nbClients::Int64 = data.nbClients
+    distancier::Matrix{Int64} = data.d
+    capa::Int64 = data.capacite
+    dmd::Int64 = data.demande
+
+    # déterminer l'ensemble des regroupements possibles
+
+    S::Set = getSubsets(capa,dmd)   # changer le type
+    
+
+
+
+
 end
 
 
