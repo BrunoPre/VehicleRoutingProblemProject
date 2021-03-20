@@ -45,21 +45,19 @@ function lecture_donnees(nom_fichier::String)
 end
 
 
-function model_exact(solverSelected::DataType, AllS_i::Vector{Vector{Int64}}, nbClient::Int64, l::Vector{Int64})
+function model_exact(solverSelected::DataType, AllS_i::Vector{Vector{Int64}}, nbClient::Int64, l::Vector{Int64}, nbRegroup::Int64)
 
     # Déclaration d'un modèle (initialement vide)
     m::Model = Model(solverSelected)
-
-    cardS::Int64 = length(AllS_i);
 
     n::Int64 = nbClient;
 
     # Déclaration des variables de décision
     # si on choisit la tournée indicée j dans l'ensemble S = \mathcal(S)
-    @variable(m, x[1:cardS]>=0, binary = true)
+    @variable(m, x[1:nbRegroup]>=0, binary = true)
 
     # Déclaration de la fonction objectif (avec le sens d'optimisation)
-    @objective(m, Min, sum(l[j]x[j] for j in 1:cardS))
+    @objective(m, Min, sum(l[j]x[j] for j in 1:nbRegroup))
 
     # Déclaration des contraintes : A REPRENDRE à cause d'un pb d'index
     @constraint(m, VisitOnlyOnceClient[i=2:n], sum(x[j] for j in AllS_i[i-1]) == 1)
@@ -147,7 +145,11 @@ function test()
     println(l)
     println(AllS_i)
     =#
-    println(AllS_i[2-1])
+    for i in 2:nbClients
+        for j in AllS_i[i-1]
+            println(j)
+        end
+    end
 
 #=
     #seconde test: get getSubsets
@@ -184,8 +186,12 @@ function data_then_solve(filename::String)
         AllS_i = push!(AllS_i,getSetofCyclesClient(S,i))
     end
 
+    # nb de regroupements
+    nbRegroup::Int64 = length(S)
+
+
     # création du modèle à partir des données
-    m::Model = model_exact(GLPK.Optimizer,AllS_i,nbClients,l)
+    m::Model = model_exact(GLPK.Optimizer,AllS_i,nbClients,l,nbRegroup)
 
     # résolution
     optimize!(m)
@@ -198,9 +204,9 @@ function data_then_solve(filename::String)
 
         # Affichage de la tournée retenue
         println("Tournées retenues : ")
-        for j in 1:length(m[:x])
+        for j in 1:nbRegroup
             if (value(m[:x][j])==1.0)
-                println("n°",i," : ", AllS_i[j], " de distance ", l[j])
+                println("n°",j," : ", S[j], " de distance ", l[j])
             end
         end
 
