@@ -45,22 +45,20 @@ function lecture_donnees(nom_fichier::String)
 end
 
 
-function model_exact(solverSelected::DataType, AllS_i::Vector{Vector{Int64}}, nbClient::Int64, l::Vector{Int64}, nbRegroup::Int64)
+function model_exact(solverSelected::DataType, AllS_i::Vector{Vector{Int64}}, nbClient::Int64, l::Vector{Tuple{Vector{Int64},Int64}}, nbRegroup::Int64)
 
     # Déclaration d'un modèle (initialement vide)
     m::Model = Model(solverSelected)
-
-    n::Int64 = nbClient;
 
     # Déclaration des variables de décision
     # si on choisit la tournée indicée j dans l'ensemble S = \mathcal(S)
     @variable(m, x[1:nbRegroup]>=0, binary = true)
 
     # Déclaration de la fonction objectif (avec le sens d'optimisation)
-    @objective(m, Min, sum(l[j]x[j] for j in 1:nbRegroup))
+    @objective(m, Min, sum(l[j][2]*x[j] for j in 1:nbRegroup))
 
     # Déclaration des contraintes : A REPRENDRE à cause d'un pb d'index
-    @constraint(m, VisitOnlyOnceClient[i=2:n], sum(x[j] for j in AllS_i[i-1]) == 1)
+    @constraint(m, VisitOnlyOnceClient[i=2:nbClient], sum(x[j] for j in AllS_i[i-1]) == 1)
 
     return m
 end
@@ -109,16 +107,16 @@ function getSetofCyclesClient(S::Vector{Vector{Int64}}, cli::Int64)
 end
 
 
-# déterminer la distance la plus courte dans un regroupement Si, étant donné un distancier d
+# déterminer la tournée et sa distance la plus courte dans un regroupement Si, étant donné un distancier d
 function determineShortestCycle(Si::Vector{Int64}, d::Matrix{Int64}) # S est l'ensemble d'indices et d est le distancier
     Si = append!([1],Si)
     newd::Matrix{Int64} = d[Si,Si]
-    return solveTSPExact(newd)[2]
+    return solveTSPExact(newd)
 end
 
 # fournir le vecteur des longueurs de chaque regroupement dans S
 function getAllShortestCycles(S::Vector{Vector{Int64}}, d::Matrix{Int64})
-    res::Vector{Int64} = [] # initialisation
+    res::Vector{Tuple{Vector{Int64},Int64}} = [] # initialisation
     for i in 1:length(S)    # pour chaque regroupement
         res = push!(res,determineShortestCycle(S[i],d)) # ajouter sa distance minimale au vecteur à retourner
     end
@@ -134,7 +132,7 @@ function test()
     dmd::Vector{Int64} = data.demande
     nbClients::Int64 = data.nbClients
     S::Vector{Vector{Int64}} = getSubsets(capa,dmd,d)
-    l::Vector{Int64} = getAllShortestCycles(S,d)
+    l::Vector{Tuple{Vector{Int64},Int64}} = getAllShortestCycles(S,d)
     AllS_i::Vector{Vector{Int64}} = []
     for i in 2:nbClients
         AllS_i = push!(AllS_i,getSetofCyclesClient(S,i))
@@ -145,11 +143,7 @@ function test()
     println(l)
     println(AllS_i)
     =#
-    for i in 2:nbClients
-        for j in AllS_i[i-1]
-            println(j)
-        end
-    end
+    println(l[4])
 
 #=
     #seconde test: get getSubsets
@@ -165,9 +159,8 @@ function test()
 end
 
 
-function data_then_solve(filename::String)
+function data_then_solve_exact(filename::String)
     # Conversion fichier -> structures de données
-
     data::donnees = lecture_donnees(filename)
     nbClients::Int64 = data.nbClients
     distancier::Matrix{Int64} = data.distance
@@ -177,8 +170,8 @@ function data_then_solve(filename::String)
     # déterminer l'ensemble des regroupements possibles
     S::Vector{Vector{Int64}} = getSubsets(capa,dmd,distancier)
     
-    # vecteur des longueurs
-    l::Vector{Int64} = getAllShortestCycles(S,distancier)
+    # vecteur des couples ordres de tournées / longueurs
+    l::Vector{Tuple{Vector{Int64},Int64}} = getAllShortestCycles(S,distancier)
 
     # vecteur des vecteurs des indices de tournées contenant le client i
     AllS_i::Vector{Vector{Int64}} = []
@@ -188,7 +181,6 @@ function data_then_solve(filename::String)
 
     # nb de regroupements
     nbRegroup::Int64 = length(S)
-
 
     # création du modèle à partir des données
     m::Model = model_exact(GLPK.Optimizer,AllS_i,nbClients,l,nbRegroup)
@@ -205,13 +197,13 @@ function data_then_solve(filename::String)
         # Affichage de la tournée retenue
         println("Tournées retenues : ")
         for j in 1:nbRegroup
-            if (value(m[:x][j])==1.0)
-                println("n°",j," : ", S[j], " de distance ", l[j])
+            if (value(m[:x][j]) == 1.0)
+                println("n°",j," : ", l[j][1], " de distance ", l[j][2])
             end
         end
 
         # affichage de la valeur optimale
-        println("Distance totale minimale : z = ", objective_value(m))
+        println("Distance totale minimale : z = ", round(Int64,objective_value(m)))
 
         println()
 
