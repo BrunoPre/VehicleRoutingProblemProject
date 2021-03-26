@@ -73,31 +73,24 @@ function model_exact(solverSelected::DataType, AllS_i::Vector{Vector{Int64}}, nb
     return m
 end
 
-# Fonction calculant la matrice des gains, étant donné un distancier
-function calcGainMatrix(d::Matrix{Int64})
+# Fonction calculant le vecteur des gains, étant donné un distancier
+function calcGainVector(d::Matrix{Int64})
 
 # parcours dans la partie triangulaire supérieure (par symétrie du distancier)
     n,m::Int64 = size(d)
-    G::Array{Int64,2} = Array{Int64}(undef, 0, 2)
-    k::Int64 = 2    # indice de décalage du début de la lecture de la ligne, suivant un zéro (parcours triangulaire)
-    lineG::Array{Int64,1} = [] # sous-tableau / ligne de G
-    lineZeros::Array{Int64,1} = [] # début de zéros pour la ligne
-    gij::Int64 = 0 # initialisation
-    for i in 1:n # parcours selon les lignes de d
-
-        # ajouter un zéro supplémentaire
-        lineZeros = push!(lineZeros,0)
-        lineG = lineZeros   # copy?
-
+    G::Vector{Tuple{Tuple{Int64,Int64},Int64}} = []
+    k::Int64 = 3    # indice de décalage du début de la lecture de la ligne, suivant un zéro (parcours triangulaire)
+    gij::Int64 = 0 # déclaration de la variable
+    
+    for i in 2:n # parcours selon les lignes de d
         # parcours selon les colonnes à partir de k
         for j in k:m
             gij = d[i,1] + d[1,j] - d[i,j] # gain
-            lineG = push!(lineG,gij) # ajout à la future ligne de la matrice finale
+            G = push!(G,((i,j),gij))
         end
-        lineGprim::Array{Int64,2}(undef,1,length(lineG)) = convert(Array{Int64,2},lineG)
-        G = vcat(G,lineGprim) # ajout de la ligne dans la future matrice
         k += 1 # décaler le début de la lecture du triangle supérieur de d
     end
+    return G
 end
 
 
@@ -110,7 +103,7 @@ function test()
     dmd::Vector{Int64} = data.demande
     nbClients::Int64 = data.nbClients
 
-    G::Matrix{Int64} = calcGainMatrix(d)
+    G::Vector{Tuple{Tuple{Int64,Int64},Int64}} = calcGainVector(d)
     println(G)
 
 end

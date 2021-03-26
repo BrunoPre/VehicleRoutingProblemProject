@@ -184,7 +184,7 @@ function data_then_solve_exact(filename::String)
     dmd::Vector{Int64} = data.demande
 
     # déterminer l'ensemble des regroupements possibles
-    S::Vector{Vector{Int64}} = getSubsets(capa,dmd,distancier)
+    S::Vector{Vector{Int64}} = @time getSubsets(capa,dmd,distancier)
     
     # vecteur des couples ordres de tournées / longueurs
     l::Vector{Tuple{Vector{Int64},Int64}} = getAllShortestCycles(S,distancier)
