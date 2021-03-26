@@ -92,23 +92,28 @@ function calcGainVector(d::Matrix{Int64})
     end
     return G
 end
+
+# fonction triant le vecteur ((i,j),gij) dans l'ordre décroissant des gij
 function sortVector(toSort::Vector{Tuple{Tuple{Int64,Int64},Int64}})
     return sort!(toSort,by = x -> x[2])
 end
 
-# fonction
+# fonction fusionnant 
 
 
 # fonction de test (hors-sujet)
 function test()
     #First test all subsets and respective shortest distances
-    data::donnees = lecture_donnees("A/VRPA10.dat") # fichier dans le même dossier (cf ex. du sujet)
+    data::donnees = lecture_donnees("exemple.dat") # fichier dans le même dossier (cf ex. du sujet)
     d::Matrix{Int64} = data.distance
     capa::Int64 = data.capacite
     dmd::Vector{Int64} = data.demande
     nbClients::Int64 = data.nbClients
 
     G::Vector{Tuple{Tuple{Int64,Int64},Int64}} = calcGainVector(d)
+    println(G)
+
+    G = sortVector(G)
     println(G)
 
 end
