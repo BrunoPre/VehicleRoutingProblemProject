@@ -92,7 +92,9 @@ function calcGainVector(d::Matrix{Int64})
     end
     return G
 end
-
+function sortVector(toSort::Vector{Tuple{Tuple{Int64,Int64},Int64}})
+    return sort!(toSort,by = x -> x[2])
+end
 
 # fonction de test (hors-sujet)
 function test()
@@ -179,9 +181,7 @@ function solveTSPExact(d::Matrix{Int64})
     # Retour du résultat
     return cycle, round(Int64,l)
 end
-function sortVector(toSort::Vector{Tuple{Tuple{Int64,Int64},Int64}})
-    return sort!(toSort,by = x - > x[2])
-end
+
 #=
 # Exemple d'application de solveTSPExact() sur le problème de l'exercice 2.5
 # Valeur retournée : ([7, 1, 5, 6, 2, 3, 4], 2575.0)
