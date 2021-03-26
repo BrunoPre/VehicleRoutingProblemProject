@@ -92,7 +92,9 @@ function calcGainVector(d::Matrix{Int64})
     end
     return G
 end
-
+function sortVector(toSort::Vector{Tuple{Tuple{Int64,Int64},Int64}})
+    return sort!(toSort,by = x -> x[2])
+end
 
 # fonction
 
