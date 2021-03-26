@@ -90,7 +90,7 @@ function getSubsets_recursive(P::Vector{Int64}, S::Vector{Vector{Int64}},capacit
     while index <= length(demande) 
         if d+demande[index]<=capacite   # condition de \mathcal(S)                                                                                       
             toadd::Vector{Int64} = copy(P)                   # copie profonde de P pour que les changements effectués dans toadd ne soit pas effectués dans P
-            toadd = append!(toadd,index+1)                     # A REPRENDRE : Comme la demande des elements dans P et demande[index] sont ensemble plus petite que la capacité on construit l'union des deux
+            toadd = append!(toadd,index+1)                     # d'après la conditionnelle, la demande des totale des clients dans P, sommée avec demande[index], est inférieure à la capacité. Donc on construit l'union des candidats dans P et du candidat "index"
             S = vcat(S,[toadd])                                 # On concatène cette union à S
             Snew::Vector{Vector{Int64}}=getSubsets_recursive(toadd,S,capacite,demande,index+1,demande[index]+d,distances)  #appel récursif sur cette union, la nouvelle demande et la demande de tous les clients dans "toadd". Le curseur "index" est incrémenté parce qu'on veut pas considérer le même client
             if length(S)<length(Snew)                         #On veut seulement ajouter le fin du résultat de l'appel récursif si les deux vecteurs sont différents
