@@ -94,10 +94,13 @@ function calcGainVector(d::Matrix{Int64})
 end
 
 
+# fonction
+
+
 # fonction de test (hors-sujet)
 function test()
     #First test all subsets and respective shortest distances
-    data::donnees = lecture_donnees("exemple.dat") # fichier dans le même dossier (cf ex. du sujet)
+    data::donnees = lecture_donnees("A/VRPA10.dat") # fichier dans le même dossier (cf ex. du sujet)
     d::Matrix{Int64} = data.distance
     capa::Int64 = data.capacite
     dmd::Vector{Int64} = data.demande
