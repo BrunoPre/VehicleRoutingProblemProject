@@ -1,4 +1,9 @@
-#= méthode exacte =#
+#= PROJET RO 2021
+    Résolution exacte
+    PREKA Bruno
+    ZELLE Yannick
+    681C
+=#
 
 using JuMP, GLPK
 using TravelingSalesmanExact # pour des fonctions du problème du voyageur de commerce
@@ -13,12 +18,11 @@ mutable struct donnees
 end
 
 # Fonction de lecture des données du problème
-# TODO : modifier les commentaires et les variables
 function lecture_donnees(nom_fichier::String)
     # Ouverture d'un fichier en lecture
     f::IOStream = open(nom_fichier,"r")
 
-    # Lecture de la première ligne pour connaître le nombre de villes
+    # Lecture de la première ligne pour connaître le nombre de clients
     s::String = readline(f) # lecture d'une ligne et stockage dans une chaîne de caractères
     nbClients::Int64 = parse(Int64,s) # Transformation de la chaîne de caractère en entier
 
@@ -44,43 +48,53 @@ function lecture_donnees(nom_fichier::String)
     return donnees(nbClients,capacite,demande,distance)
 end
 
-
+# Fonction de modèle
 function model_exact(solverSelected::DataType, AllS_i::Vector{Vector{Int64}}, nbClient::Int64, l::Vector{Tuple{Vector{Int64},Int64}}, nbRegroup::Int64)
+    # Vocabulaire :
+    #= AllS_i contient les ensembles des indices des tournées dans lesquels un client i est desservi,
+        i.e. pour tout i, AllS_i[i] est le vecteur des indices des tournées dans lesquels le client i est visité =#
+    # l est le vecteur de tous les couples (tournée,distance_min) déterminés par TSP
+    # nbRegroup est le nombre de regroupements 
 
     # Déclaration d'un modèle (initialement vide)
     m::Model = Model(solverSelected)
 
     # Déclaration des variables de décision
-    # si on choisit la tournée indicée j dans l'ensemble S = \mathcal(S)
+    # si on choisit la tournée indicée j dans l'ensemble \mathcal(S), alors x[j]=1. Sinon x[j]=0
     @variable(m, x[1:nbRegroup]>=0, binary = true)
 
     # Déclaration de la fonction objectif (avec le sens d'optimisation)
+    # "l" étant un vecteur de couples (tournée, distance), on ne s'intéresse qu'à la distance, soit : l[j][2]
     @objective(m, Min, sum(l[j][2]*x[j] for j in 1:nbRegroup))
 
-    # Déclaration des contraintes : A REPRENDRE à cause d'un pb d'index
+    # Déclaration de la contrainte garantissant que chaque client soit visité une seule fois
     @constraint(m, VisitOnlyOnceClient[i=2:nbClient], sum(x[j] for j in AllS_i[i-1]) == 1)
 
     return m
 end
 
-#Fonction qui prend deux ensemble  initialement vide, la capacite de drone, 
-#une vecteur avec les demandes des endroitrs et deux integer,
-#qui doit être 0 à la debut et retourne l'ensemble S qui contient
-#tous les combinaison possible une fois 
+#= Fonction déterminant l'ensemble des regroupements, étant donnés :
+* deux ensembles initialement vides,
+* la capacité du drone, 
+* un vecteur contenant les demandes des clients,
+* deux entiers :
+    * index est un curseur initialisé à 0 au premier appel
+    * d est un accumulateur de la demande (cf condition sur \mathcal(S) : "somme des d_j <= Ca")
+La fonction retourne alors l'ensemble S qui contient tous les regroupements possibles =#
 function getSubsets_recursive(P::Vector{Int64}, S::Vector{Vector{Int64}},capacite::Int64, demande::Vector{Int64}, index::Int64, d::Int64, distances::Matrix{Int64})
-    #Arreter la recursion si on est à la fin d'index et retour S
+    # Condition d'arrêt : le curseur "index" a passé en revue toutes les demandes / tous les clients
     if index > length(demande)
         return S                        
     end
-    #buckle sur tout les demandes de clients
+    # Itération sur toutes les demandes des clients
     while index <= length(demande) 
-        if d+demande[index]<=capacite                                                                                       
-            toadd::Vector{Int64}= copy(P)                   #Copy P pour avoir un nouveau tableau et les changements dans toadd ne soit pas transfere à Par 
-            toadd=append!(toadd,index+1)                     #Comme demande des elements dans P et demande[index] sont ensemble plus petite que la capacité on construit l'union de les deux
-            S=vcat(S,[toadd])                                 #On ajoute cette union dans S
-            Snew::Vector{Vector{Int64}}=getSubsets_recursive(toadd,S,capacite,demande,index+1,demande[index]+d,distances)  #appelle recursive avec cette union le nouveau demande est la demande de tous elements dans toadd et on augmenter l'index avec 1 parce que on veut pas considere le même element
-            if length(S)<length(Snew)                         #On veut seulement ajoute le fin de resultat de l'apelle recursice si les deux arrays sont pas egale
-                S=vcat(S,Snew[length(S)+1:length(Snew)])        #Si ils sont pas égale on append le part d'array de l'appelle récursive qui est nouveau 
+        if d+demande[index]<=capacite   # condition de \mathcal(S)                                                                                       
+            toadd::Vector{Int64} = copy(P)                   # copie profonde de P pour que les changements effectués dans toadd ne soit pas effectués dans P
+            toadd = append!(toadd,index+1)                     # A REPRENDRE : Comme la demande des elements dans P et demande[index] sont ensemble plus petite que la capacité on construit l'union des deux
+            S = vcat(S,[toadd])                                 # On concatène cette union à S
+            Snew::Vector{Vector{Int64}}=getSubsets_recursive(toadd,S,capacite,demande,index+1,demande[index]+d,distances)  #appel récursif sur cette union, la nouvelle demande et la demande de tous les clients dans "toadd". Le curseur "index" est incrémenté parce qu'on veut pas considérer le même client
+            if length(S)<length(Snew)                         #On veut seulement ajouter le fin du résultat de l'appel récursif si les deux vecteurs sont différents
+                S=vcat(S,Snew[length(S)+1:length(Snew)])        #dans ce cas, on ne concatène que la partie nouvelle du vecteur résultant de l'appel récursif
             end
         end
         index+=1
@@ -88,18 +102,18 @@ function getSubsets_recursive(P::Vector{Int64}, S::Vector{Vector{Int64}},capacit
     return S
 end
 
-#wrapper pour la méthod getSubsets_recursive
+# fonction d'encapsulation de la fonction récursive getSubsets_recursive
 function getSubsets(capacite::Int64,demande::Vector{Int64}, distances::Matrix{Int64})
     P::Vector{Int64}=[]
     S::Vector{Vector{Int64}}=[]
-    return collect(getSubsets_recursive(P,S,capacite,demande,1,0,distances))
+    return getSubsets_recursive(P,S,capacite,demande,1,0,distances)
 end
 
-# déterminer l'ensemble de numéros de regroupements dans lesquels le client "cli" est livré
+# fonction déterminant l'ensemble de numéros de regroupements dans lesquels le client "cli" est livré
 function getSetofCyclesClient(S::Vector{Vector{Int64}}, cli::Int64)
     res::Vector{Int64} = []
     for i in 1:length(S) # pour chaque regroupement...
-        if cli in S[i]  # ...si notre client "cli" y appartient...
+        if cli in S[i]  # ...si le client "cli" y appartient...
             res = push!(res,i)    # ...alors on ajoute l'indice de ce regroupement dans notre vecteur final
         end
     end
@@ -107,23 +121,23 @@ function getSetofCyclesClient(S::Vector{Vector{Int64}}, cli::Int64)
 end
 
 
-# déterminer la tournée et sa distance la plus courte dans un regroupement Si, étant donné un distancier d
-function determineShortestCycle(Si::Vector{Int64}, d::Matrix{Int64}) # S est l'ensemble d'indices et d est le distancier
-    Si = append!([1],Si)
-    newd::Matrix{Int64} = d[Si,Si]
-    return solveTSPExact(newd)
+# fonction déterminant la tournée et sa distance la plus courte dans un regroupement "Si", étant donné un distancier "d"
+function determineShortestCycle(Si::Vector{Int64}, d::Matrix{Int64}) # Si est l'ensemble des clients à visiter et d est le distancier
+    Si = append!([1],Si) # on n'oublie pas d'inclure le dépôt pour TSP
+    newd::Matrix{Int64} = d[Si,Si] # restriction du distancier sur les clients à visiter et le dépôt
+    return solveTSPExact(newd) # retour d'un couple (tournée,distance_min)
 end
 
-# fournir le vecteur des longueurs de chaque regroupement dans S
+# fonction fournissant le vecteur des couples (tournée,distance_min) de chaque regroupement de S
 function getAllShortestCycles(S::Vector{Vector{Int64}}, d::Matrix{Int64})
     res::Vector{Tuple{Vector{Int64},Int64}} = [] # initialisation
-    for i in 1:length(S)    # pour chaque regroupement
-        res = push!(res,determineShortestCycle(S[i],d)) # ajouter sa distance minimale au vecteur à retourner
+    for i in 1:length(S)    # pour chaque regroupement...
+        res = push!(res,determineShortestCycle(S[i],d)) # ...ajouter son couple correspondant au vecteur à retourner
     end
     return res
 end
 
-
+# fonction de test (hors-sujet)
 function test()
     #First test all subsets and respective shortest distances
     data::donnees = lecture_donnees("exemple.dat") # fichier dans le même dossier (cf ex. du sujet)
@@ -139,12 +153,14 @@ function test()
     end
     #=
     println("n=",nbClients)
-    println(S)
-    println(l)
-    println(AllS_i)
+    println("Tous les regroupements :",S)
+    println("Couples (tournée,dist_min) :",l)
+    println("Ensemble d'ensembles d'indices des tournées pour lesquelles le client i est visité :", AllS_i)
     =#
-    println(l[4])
-
+    S4::Vector{Int64} = [2,3,4,6]
+    S4 = append!([1],S4)
+    newd::Matrix{Int64} = d[S4,S4]
+    println(solveTSPExact(newd))
 #=
     #seconde test: get getSubsets
     de::Vector{Int64}=[2,4,2,4,2]
@@ -158,7 +174,7 @@ function test()
     =#
 end
 
-
+# fonction de prise des données et de résolution
 function data_then_solve_exact(filename::String)
     # Conversion fichier -> structures de données
     data::donnees = lecture_donnees(filename)
@@ -216,11 +232,15 @@ function data_then_solve_exact(filename::String)
 
 end
 
+# exécution de data_then_solve, avec le timer
+function timer_res_exact(filename::String)
+    @time data_then_solve_exact(filename)
+end
 
 
 # Fonction de résolution du problème du voyageur de commerce
 # Entrée : une matrice de distances
-# Sortie : un couple composé d'une séquence de visites (ne pas oublier le retour à la "première" ville) et de sa longueur
+# Sortie : un couple composé d'une séquence de visites (ne pas oublier le retour au "premier" lieu (dépôt)) et de sa longueur
 function solveTSPExact(d::Matrix{Int64})
     # Déclaration de variables (Julia oblige de mettre une valeur initiale même si elle n'a aucun sens)
     cycle::Vector{Int64} = []
