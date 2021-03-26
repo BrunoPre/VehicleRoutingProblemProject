@@ -95,7 +95,7 @@ end
 
 # fonction triant le vecteur ((i,j),gij) dans l'ordre décroissant des gij
 function sortVector(toSort::Vector{Tuple{Tuple{Int64,Int64},Int64}})
-    return sort!(toSort,by = x -> x[2])
+    return sort!(toSort,by = x -> x[2],rev=true)
 end
 
 # fonction fusionnant 
@@ -112,6 +112,7 @@ function test()
 
     G::Vector{Tuple{Tuple{Int64,Int64},Int64}} = calcGainVector(d)
     println(G)
+    print(sortVector(G))
 
     G = sortVector(G)
     println(G)
