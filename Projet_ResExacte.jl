@@ -125,7 +125,22 @@ end
 function determineShortestCycle(Si::Vector{Int64}, d::Matrix{Int64}) # Si est l'ensemble des clients à visiter et d est le distancier
     Si = append!([1],Si) # on n'oublie pas d'inclure le dépôt pour TSP
     newd::Matrix{Int64} = d[Si,Si] # restriction du distancier sur les clients à visiter et le dépôt
-    return solveTSPExact(newd) # retour d'un couple (tournée,distance_min)
+
+    # initialisations
+    tournee::Vector{Int64} = []
+    distmin::Int64 = 0
+
+    # résolution du problème TSP
+    tournee, distmin = solveTSPExact(newd)
+
+    # réajustement des indices
+    newtournee::Vector{Int64} = []
+    for i in 1:length(tournee)
+        k = tournee[i] # l'indice donné par TSP est le numéro du client de Si
+        newtournee = push!(newtournee,Si[k]) # insertion du numéro correspondant dans la "nouvelle" tournée
+    end
+
+    return newtournee, distmin
 end
 
 # fonction fournissant le vecteur des couples (tournée,distance_min) de chaque regroupement de S
@@ -151,16 +166,18 @@ function test()
     for i in 2:nbClients
         AllS_i = push!(AllS_i,getSetofCyclesClient(S,i))
     end
+    
     #=
     println("n=",nbClients)
     println("Tous les regroupements :",S)
     println("Couples (tournée,dist_min) :",l)
     println("Ensemble d'ensembles d'indices des tournées pour lesquelles le client i est visité :", AllS_i)
     =#
+
+    #=
     S4::Vector{Int64} = [2,3,4,6]
-    S4 = append!([1],S4)
-    newd::Matrix{Int64} = d[S4,S4]
-    println(solveTSPExact(newd))
+    println(determineShortestCycle(S4,d))
+    =#
 #=
     #seconde test: get getSubsets
     de::Vector{Int64}=[2,4,2,4,2]
@@ -184,6 +201,7 @@ function data_then_solve_exact(filename::String)
     dmd::Vector{Int64} = data.demande
 
     # déterminer l'ensemble des regroupements possibles
+    println("Temps CPU pour la construction de l'instance de partitionnement d'ensemble :")
     S::Vector{Vector{Int64}} = @time getSubsets(capa,dmd,distancier)
     
     # vecteur des couples ordres de tournées / longueurs
@@ -202,7 +220,10 @@ function data_then_solve_exact(filename::String)
     m::Model = model_exact(GLPK.Optimizer,AllS_i,nbClients,l,nbRegroup)
 
     # résolution
-    optimize!(m)
+    println()
+    println("Temps CPU pour la résolution du programme linéaire :")
+    @time optimize!(m)
+    println()
 
     # Affichage des résultats (ici assez complet pour gérer certains cas d'"erreur")
     status = termination_status(m)
@@ -229,6 +250,9 @@ function data_then_solve_exact(filename::String)
     elseif status == MOI.INFEASIBLE_OR_UNBOUNDED
         println("Problème impossible")
     end
+
+    # dernier affichage avant celui de la macro @time dans timer_res_exact
+    println("Temps CPU total :")
 
 end
 
