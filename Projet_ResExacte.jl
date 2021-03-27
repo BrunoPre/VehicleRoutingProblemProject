@@ -140,7 +140,7 @@ function determineShortestCycle(Si::Vector{Int64}, d::Matrix{Int64}) # Si est l'
         newtournee = push!(newtournee,Si[k]) # insertion du numéro correspondant dans la "nouvelle" tournée
     end
 
-    return newtournee, distmin
+    return tournee, distmin
 end
 
 # fonction fournissant le vecteur des couples (tournée,distance_min) de chaque regroupement de S
@@ -203,9 +203,12 @@ function data_then_solve_exact(filename::String)
     # déterminer l'ensemble des regroupements possibles
     println("Temps CPU pour la construction de l'instance de partitionnement d'ensemble :")
     S::Vector{Vector{Int64}} = @time getSubsets(capa,dmd,distancier)
-    
+    println()
+
     # vecteur des couples ordres de tournées / longueurs
-    l::Vector{Tuple{Vector{Int64},Int64}} = getAllShortestCycles(S,distancier)
+    println("Temps CPU pour fournir le vecteur des couples (tournee,dist_min) pour chaque regroupement via TSP :")
+    l::Vector{Tuple{Vector{Int64},Int64}} = @time getAllShortestCycles(S,distancier)
+    println()
 
     # vecteur des vecteurs des indices de tournées contenant le client i
     AllS_i::Vector{Vector{Int64}} = []
@@ -220,7 +223,6 @@ function data_then_solve_exact(filename::String)
     m::Model = model_exact(GLPK.Optimizer,AllS_i,nbClients,l,nbRegroup)
 
     # résolution
-    println()
     println("Temps CPU pour la résolution du programme linéaire :")
     @time optimize!(m)
     println()
