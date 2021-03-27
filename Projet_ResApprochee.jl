@@ -49,7 +49,7 @@ function lecture_donnees(nom_fichier::String)
 end
 
 # A MODIFIER Fonction de modèle
-function model_exact(solverSelected::DataType, AllS_i::Vector{Vector{Int64}}, nbClient::Int64, l::Vector{Tuple{Vector{Int64},Int64}}, nbRegroup::Int64)
+function model_appr(solverSelected::DataType, AllS_i::Vector{Vector{Int64}}, nbClient::Int64, l::Vector{Tuple{Vector{Int64},Int64}}, nbRegroup::Int64)
     # Vocabulaire :
     #= AllS_i contient les ensembles des indices des tournées dans lesquels un client i est desservi,
         i.e. pour tout i, AllS_i[i] est le vecteur des indices des tournées dans lesquels le client i est visité =#
@@ -76,7 +76,7 @@ end
 # Fonction calculant le vecteur des gains, étant donné un distancier
 function calcGainVector(d::Matrix{Int64})
 
-# parcours dans la partie triangulaire supérieure (par symétrie du distancier)
+    # parcours dans la partie triangulaire supérieure (par symétrie du distancier)
     n,m::Int64 = size(d)
     G::Vector{Tuple{Tuple{Int64,Int64},Int64}} = []
     k::Int64 = 3    # indice de décalage du début de la lecture de la ligne, suivant un zéro (parcours triangulaire)
@@ -86,7 +86,7 @@ function calcGainVector(d::Matrix{Int64})
         # parcours selon les colonnes à partir de k
         for j in k:m
             gij = d[i,1] + d[1,j] - d[i,j] # gain
-            G = push!(G,((i,j),gij))
+            G = push!(G, ((i,j),gij) ) # ajout de la paire (indices,gain) au vecteur de gains
         end
         k += 1 # décaler le début de la lecture du triangle supérieur de d
     end
@@ -98,8 +98,10 @@ function sortVector(toSort::Vector{Tuple{Tuple{Int64,Int64},Int64}})
     return sort!(toSort,by = x -> x[2],rev=true)
 end
 
-# fonction fusionnant 
-
+#= fonction fusionnant des tournées (by Yannick), 
+en partant d'un vecteur de tournées initiaux [[1,2,1],[1,3,1],...,[1,N,1]],
+s'il y a N clients en tout (N-1 si on exclut le dépôt)
+=#
 
 # fonction de test (hors-sujet)
 function test()
@@ -129,7 +131,7 @@ function data_then_solve_exact(filename::String)
     dmd::Vector{Int64} = data.demande
 
     # A MODIFIER création du modèle à partir des données
-    # m::Model = model_exact(GLPK.Optimizer,AllS_i,nbClients,l,nbRegroup)
+    #= m::Model = model_exact(GLPK.Optimizer,AllS_i,nbClients,l,nbRegroup)
 
     # résolution
     optimize!(m)
@@ -159,7 +161,7 @@ function data_then_solve_exact(filename::String)
     elseif status == MOI.INFEASIBLE_OR_UNBOUNDED
         println("Problème impossible")
     end
-
+    =#
 end
 
 # exécution de data_then_solve, avec le timer
