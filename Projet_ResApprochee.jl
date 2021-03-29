@@ -82,7 +82,7 @@ function calcGainVector(d::Matrix{Int64})
     k::Int64 = 3    # indice de décalage du début de la lecture de la ligne, suivant un zéro (parcours triangulaire)
     gij::Int64 = 0 # déclaration de la variable
     
-    for i in 2:n # parcours selon les lignes de d
+    for i in 2:n # parcours selon les lignes de d (on commence à 2, d'où, par ailleurs, k=3 au début)
         # parcours selon les colonnes à partir de k
         for j in k:m
             gij = d[i,1] + d[1,j] - d[i,j] # gain
@@ -92,30 +92,31 @@ function calcGainVector(d::Matrix{Int64})
     end
     return G
 end
-#Cette foncttion prend la solution et réalise la fusion de chemins
+
+#fonction prend la solution et réalise la fusion de chemins
 function fusioner(chemins::Vector{Vector{Int64}}, sortedGains::Vector{Tuple{Tuple{Int64,Int64},Int64}}, demande::Vector{Int64}, capacite::Int64)
-    saveFusions::Vector{Int64} =[]   #Vecteuur pour garder l'information si deux chemins sont fusioner
+    saveFusions::Vector{Int64} =[]   #Vecteur pour garder l'information si deux chemins sont fusionnés
     index::Int64=1
-    for chemin in chemins           #Initialisation de cette vectuer. Tout d'abord chaque indice point sur le chemin qui est assossié à cette index
+    for ch in chemins           #Initialisation de ce vecteur. Tout d'abord chaque indice correspond au chemin qui lui est assossié
         append!(saveFusions,index)
         index+=1
     end
-    for gain in sortedGains                 #On regard tou les éléments du vectuer de gains
-        fusionA = saveFusions[gain[1][1]]       #prend l'index des deux élements qui sont associé à le fusiion de question
+    for gain in sortedGains                 # on itère sur tous les gains
+        fusionA = saveFusions[gain[1][1]]       # pour chaque gain, on prend les indices (i,j) associés à ce gain
         fusionB = saveFusions[gain[1][2]]
-        if (fusionA != fusionB & demande[fusionA]+demande[fusionB]<=capacite)       #Si les deux elements sont égale, il était déjà fusioné. On fait rien, même pour le case si la demande de une fusion est supérieur à la capacité
-            saveFusions[gain[1][2]] =fusionA                                        #Sinon on fait la fusion on aon actualise la position de saveFusions au point fusionB avec fusionA
-            demande[fusionA]= demande[fusionA]+demande[fusionB]                     #On aussi actualise la demande et le chemin qui corresponde à cette fonctiom
-            chemins[fusionA][size(chemins[fusionA])-1]=fusionB+1
+        if (fusionA != fusionB & demande[fusionA]+demande[fusionB]<=capacite)       #si fusionA=fusionB, alors la fusion a déjà eu lieu. On ne fait rien, même dans le cas où la demande de la fusion dépasse la capacité
+            saveFusions[gain[1][2]] =fusionA                                        #Autrement, on fait la fusion et on remplace la position "fusionB" de saveFusions par "fusionA"
+            demande[fusionA]= demande[fusionA]+demande[fusionB]                     #On actualise aussi la demande,
+            chemins[fusionA][size(chemins[fusionA])-1]=fusionB+1                    #puis le chemin qui correspond à cette fonction
             append!(chemins[fusionA],1)
             chemins[fusionB]=nothing
         end    
-    end                                            #Le chemin à la position B existe plus il est maintenant incluir dans le chemin à la position fusionA, alors on le suprime                                         
+    end                                            #Le chemin à la position B n'existe plus. Il est maintenant inclus dans le chemin à la position fusionA. Alors on le supprime
     return chemins
 end
 
 
-# fonction qui initialisier les chemins d'abor avec les chemins 1->X->1
+# fonction qui initialise les chemins du type 1->X->1 (X \in [|2,n|] )
 function initialiserChemins(demande::Vector{Int64})
     index::Int64=2
     chemins::Vector{Vector{Int64}}=[]
@@ -126,15 +127,12 @@ function initialiserChemins(demande::Vector{Int64})
     end
     return chemins
 end
+
 # fonction triant le vecteur ((i,j),gij) dans l'ordre décroissant des gij
 function sortVector(toSort::Vector{Tuple{Tuple{Int64,Int64},Int64}})
     return sort!(toSort,by = x -> x[2],rev=true)
 end
 
-#= fonction fusionnant des tournées (by Yannick), 
-en partant d'un vecteur de tournées initiaux [[1,2,1],[1,3,1],...,[1,N,1]],
-s'il y a N clients en tout (N-1 si on exclut le dépôt)
-=#
 
 # fonction de test (hors-sujet)
 function test()
