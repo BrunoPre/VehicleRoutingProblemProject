@@ -76,7 +76,7 @@ end
 #= Fonction déterminant l'ensemble des regroupements, étant donnés :
 * deux ensembles initialement vides,
 * la capacité du drone, 
-* un vecteur contenant les demandes des clients,
+* un vecteur contenant la demande des clients,
 * deux entiers :
     * index est un curseur initialisé à 0 au premier appel
     * d est un accumulateur de la demande (cf condition sur \mathcal(S) : "somme des d_j <= Ca")
@@ -135,6 +135,7 @@ function determineShortestCycle(Si::Vector{Int64}, d::Matrix{Int64}) # Si est l'
 
     # réajustement des indices
     newtournee::Vector{Int64} = []
+    k::Int64 = 0 # initialisation
     for i in 1:length(tournee)
         k = tournee[i] # l'indice donné par TSP est le numéro du client de Si
         newtournee = push!(newtournee,Si[k]) # insertion du numéro correspondant dans la "nouvelle" tournée
