@@ -92,7 +92,40 @@ function calcGainVector(d::Matrix{Int64})
     end
     return G
 end
+#Cette foncttion prend la solution et réalise la fusion de chemins
+function fusioner(chemins::Vector{Vector{Int64}}, sortedGains::Vector{Tuple{Tuple{Int64,Int64},Int64}}, demande::Vector{Int64}, capacite::Int64)
+    saveFusions::Vector{Int64} =[]   #Vecteuur pour garder l'information si deux chemins sont fusioner
+    index::Int64=1
+    for chemin in chemins           #Initialisation de cette vectuer. Tout d'abord chaque indice point sur le chemin qui est assossié à cette index
+        append!(saveFusions,index)
+        index+=1
+    end
+    for gain in sortedGains                 #On regard tou les éléments du vectuer de gains
+        fusionA = saveFusions[gain[1][1]]       #prend l'index des deux élements qui sont associé à le fusiion de question
+        fusionB = saveFusions[gain[1][2]]
+        if (fusionA != fusionB & demande[fusionA]+demande[fusionB]<=capacite)       #Si les deux elements sont égale, il était déjà fusioné. On fait rien, même pour le case si la demande de une fusion est supérieur à la capacité
+            saveFusions[gain[1][2]] =fusionA                                        #Sinon on fait la fusion on aon actualise la position de saveFusions au point fusionB avec fusionA
+            demande[fusionA]= demande[fusionA]+demande[fusionB]                     #On aussi actualise la demande et le chemin qui corresponde à cette fonctiom
+            chemins[fusionA][size(chemins[fusionA])-1]=fusionB+1
+            append!(chemins[fusionA],1)
+            chemins[fusionB]=nothing
+        end    
+    end                                            #Le chemin à la position B existe plus il est maintenant incluir dans le chemin à la position fusionA, alors on le suprime                                         
+    return chemins
+end
 
+
+# fonction qui initialisier les chemins d'abor avec les chemins 1->X->1
+function initialiserChemins(demande::Vector{Int64})
+    index::Int64=2
+    chemins::Vector{Vector{Int64}}=[]
+    for d in demande
+        chemin=[1,index,1]
+        append!(chemins,[chemin])
+        index+=1
+    end
+    return chemins
+end
 # fonction triant le vecteur ((i,j),gij) dans l'ordre décroissant des gij
 function sortVector(toSort::Vector{Tuple{Tuple{Int64,Int64},Int64}})
     return sort!(toSort,by = x -> x[2],rev=true)
