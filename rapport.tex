@@ -12,6 +12,7 @@
 \usepackage{verbatim} % pour le formattage "mono"-like. Utilisation : \verb+TexteAFormatter+
 \usepackage{listings}
 \usepackage{xcolor}
+\usepackage{graphicx}
 \usepackage{makecell} % pour plusieurs lignes dans les cellules d'un tableau
 \geometry{hmargin=1.3cm,vmargin=2cm} % marges élargies
 
@@ -159,6 +160,15 @@ idem pour le deuxième, ainsi de suite... Puis, dans l'ordre, on a les correspon
 \section{Résolution approchée (brève)}
 
 \section{Analyse des résultats issus des instances numériques ($A$ et $B$)}
+\subsection{Résolution exacte}
+A l'aide de la macro \texttt{@time} de Julia, on a mesuré les temps d'exécution (en secondes) des fonctions principales et les allocations mémoires.
+Par ailleurs, on a également récupéré le nombre de regroupements pour chaque instance et les tailles minimale et maximale des regroupements.
+Ces résultats sont donnés par les tableaux suivants :
+\begin{center}
+    \includegraphics[scale=0.50]{ResExacte_InstA.PNG}
+    \includegraphics[scale=0.55]{ResExacte_InstB.PNG}
+\end{center}
+
 
 
 \end{document}
