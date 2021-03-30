@@ -141,15 +141,23 @@ function determineShortestCycle(Si::Vector{Int64}, d::Matrix{Int64}) # Si est l'
         newtournee = push!(newtournee,Si[k]) # insertion du numéro correspondant dans la "nouvelle" tournée
     end
 
-    return tournee, distmin
+    return newtournee, distmin
 end
 
 # fonction fournissant le vecteur des couples (tournée,distance_min) de chaque regroupement de S
 function getAllShortestCycles(S::Vector{Vector{Int64}}, d::Matrix{Int64})
     res::Vector{Tuple{Vector{Int64},Int64}} = [] # initialisation
+    tmin::Int64 = length(S[1])
+    tmax::Int64 = length(S[1])
     for i in 1:length(S)    # pour chaque regroupement...
+        # déterminer les tailles min et max
+        if (length(S[i]) < tmin) tmin = length(S[i]) end
+        if (length(S[i]) > tmax) tmax = length(S[i]) end
+
         res = push!(res,determineShortestCycle(S[i],d)) # ...ajouter son couple correspondant au vecteur à retourner
     end
+    println("       (Taille du plus petit regroupement (sans compter le dépôt !) : ", tmin, ")")
+    println("       (Taille du plus grand regroupement (sans compter le dépôt !) : ", tmax, ")")
     return res
 end
 
@@ -204,6 +212,8 @@ function data_then_solve_exact(filename::String)
     # déterminer l'ensemble des regroupements possibles
     println("Temps CPU pour la construction de l'instance de partitionnement d'ensemble :")
     S::Vector{Vector{Int64}} = @time getSubsets(capa,dmd,distancier)
+    println()
+    println("Nombre de regroupements : ", length(S))
     println()
 
     # vecteur des couples ordres de tournées / longueurs
