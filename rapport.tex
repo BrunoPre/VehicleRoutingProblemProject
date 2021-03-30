@@ -87,7 +87,12 @@ Pour les mêmes raisons que ce qui précède, on opte pour un vecteur de vecteur
 d'où le type \verb+Vector{Vector{Int64}}+.
 \smb Pour un client $i$, l'accès à l'ensemble des indices des tournées le desservant se fait par \texttt{AllS\_i[i]} $=S_i$.
 
-\subsubsection{Association tournée-distance minimale : \texttt{l} $= {(tournee_j,l_j) : \forall j \in \llbracket 1,|\Sc| \rrbracket, tournee_j \in \Sc \land l_j = \min_{\text{TSP}} \dist(tournee_j) }$}
+\subsubsection{Association tournée-distance minimale : \\ \texttt{l} 
+$= \{(tournee_j,l_j) \: : \: \forall j \in \llbracket 1,|\Sc| \hspace{-0.15cm} \rrbracket,  \:
+tournee_j \in \Sc 
+\: \land \:
+l_j = \min_{\text{\normalfont{TSP}}} \text{\normalfont{dist}}(tournee_j) \}$}
+
 La fonction objectif (à minimiser) s'écrit :
 \[ z = \sum_{j=1}^{|\Sc|} l_j x_j,\]
 où $l_j$ désigne la distance minimale du regroupement $j \in \llbracket 1,|\Sc| \rrbracket$, calculée par la
