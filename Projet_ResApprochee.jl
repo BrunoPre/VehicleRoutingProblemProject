@@ -102,14 +102,21 @@ function fusioner(chemins::Vector{Vector{Int64}}, sortedGains::Vector{Tuple{Tupl
         index+=1
     end
     for gain in sortedGains                 # on itère sur tous les gains
-        fusionA = saveFusions[gain[1][1]]       # pour chaque gain, on prend les indices (i,j) associés à ce gain
-        fusionB = saveFusions[gain[1][2]]
-        if (fusionA != fusionB & demande[fusionA]+demande[fusionB]<=capacite)       #si fusionA=fusionB, alors la fusion a déjà eu lieu. On ne fait rien, même dans le cas où la demande de la fusion dépasse la capacité
-            saveFusions[gain[1][2]] =fusionA                                        #Autrement, on fait la fusion et on remplace la position "fusionB" de saveFusions par "fusionA"
+        fusionA = saveFusions[gain[1][1]-1]       # pour chaque gain, on prend les indices (i,j) associés à ce gain
+        fusionB = saveFusions[gain[1][2]-1]
+        println(fusionA != fusionB && demande[fusionA]+demande[fusionB]<=capacite)
+        if (fusionA != fusionB && demande[fusionA]+demande[fusionB]<=capacite)       #si fusionA=fusionB, alors la fusion a déjà eu lieu. On ne fait rien, même dans le cas où la demande de la fusion dépasse la capacité
+            saveFusions[gain[1][2]-1] =fusionA                                        #Autrement, on fait la fusion et on remplace la position "fusionB" de saveFusions par "fusionA"
             demande[fusionA]= demande[fusionA]+demande[fusionB]                     #On actualise aussi la demande,
-            chemins[fusionA][size(chemins[fusionA])-1]=fusionB+1                    #puis le chemin qui correspond à cette fonction
-            append!(chemins[fusionA],1)
-            chemins[fusionB]=nothing
+            append!(chemins[fusionA],chemins[fusionB])                    #puis le chemin qui correspond à cette fonction
+            chemins[fusionB]=[-99]
+            i::Int64=1
+            while i <= size(saveFusions)[1]
+                if (saveFusions[i]==fusionB)
+                    saveFusions[i]=fusionA
+                end
+                i+=1
+            end
         end    
     end                                            #Le chemin à la position B n'existe plus. Il est maintenant inclus dans le chemin à la position fusionA. Alors on le supprime
     return chemins
@@ -121,7 +128,7 @@ function initialiserChemins(demande::Vector{Int64})
     index::Int64=2
     chemins::Vector{Vector{Int64}}=[]
     for d in demande
-        chemin=[1,index,1]
+        chemin=[index]
         append!(chemins,[chemin])
         index+=1
     end
@@ -131,6 +138,20 @@ end
 # fonction triant le vecteur ((i,j),gij) dans l'ordre décroissant des gij
 function sortVector(toSort::Vector{Tuple{Tuple{Int64,Int64},Int64}})
     return sort!(toSort,by = x -> x[2],rev=true)
+end
+
+
+function formatSolution(solution::Vector{Vector{Int64}})
+    formatedSolution::Vector{Vector{Int64}}=[]
+    for sol in solution 
+        if (sol!= [-99])
+            sol=append!([1],sol)
+            append!(sol,[1])
+            push!(formatedSolution,sol)
+        end
+    end
+    return formatedSolution
+
 end
 
 
@@ -149,6 +170,20 @@ function test()
 
     G = sortVector(G)
     println(G)
+    println()
+    
+    initiale::Vector{Vector{Int64}}= initialiserChemins(dmd)
+    print(initiale)
+    println()
+
+    println(size(initiale[1])[1])
+
+    solution::Vector{Vector{Int64}}= fusioner(initiale,G, dmd,capa)
+    println(solution)
+    
+    finalSolution::Vector{Vector{Int64}}=formatSolution(solution)
+    println(finalSolution)
+
 
 end
 
