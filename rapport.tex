@@ -130,7 +130,7 @@ $\{i+1,...,n\}$.
 \subsection{Fonction déterminant la tournée et sa distance minimale dans un regroupement \texttt{Si}}
 On appelle cette fonction \texttt{determineShortestCycle(Si,d)}, où : 
 \begin{itemize}
-    \item \verb+Si+ est un regroupement de clients à visiter (de type \verb+Vector{Int64+) ;
+    \item \verb+Si+ est un regroupement de clients à visiter (de type \verb+Vector{Int64}+) ;
     \item \verb+d+ est le distancier (\verb+Matrix{Int64}+).
 \end{itemize}
 \smb Puisque \verb+Si+ $\subseteq \llbracket 2,n \rrbracket$, il n'inclut pas le dépôt $1$. Ainsi, la réunion avec $\{1\}$
@@ -146,7 +146,7 @@ idem pour le deuxième, ainsi de suite... Puis, dans l'ordre, on a les correspon
 \begin{itemize}
     \item le premier client $k_1$ de $tourn\text{é}e \longrightarrow$ client d'indice $k_1$ dans \verb+Si+ ;
     \item \dots
-    \item le $i$-ème client $k_i$ de $tourn\text{é}e \longrightarrow$ \verb+Si[+$k_i$\verb+]+
+    \item le $i$-ème client $k_i$ de $tourn\text{é}e \longrightarrow$ client numéro \verb+Si[+$k_i$\verb+]+
     \item \dots
 \end{itemize}
 
