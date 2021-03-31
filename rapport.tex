@@ -54,9 +54,9 @@ Le but du problème est de minimiser la distance parcourue par l'ensemble des dr
 \smb On résout ce problème à travers deux méthodes possibles :
 \vspace{-0.2cm}
 \begin{enumerate}
-    \item Dite \emph{exacte}, elle assimile le problème en un problème d'optimisation
+    \item Dite \emph{exacte}, la méthode assimile le problème à un problème d'optimisation
 combinatoire, mais qui peut demander un temps d'exécution très important aux yeux des décideurs ;
-    \item \emph{Approchée}, elle est une variante de la méthode de Clark et Wright.
+    \item \emph{Approchée}, celle-ci est une variante de la méthode de Clark et Wright.
 \end{enumerate}
 
 \subsection{Structures de données générales}
@@ -67,19 +67,19 @@ par la structure de données
 \verb+donnees+ dont les champs sont dédiés au nombre de clients \verb+nbClients+ (y compris le dépôt), à
 la \verb+capacité+ du drone, à la \verb+demande+ des clients et au distancier \verb+distance+. On retrouvera régulièrement les types suivants :
 \begin{itemize}
-    \item \verb+nbClients+ et \verb+capacite+ sont des entiers (on utilisera le type \verb+Int64+)
-    \item \verb+demande+ est un vecteur d'entiers \verb+Vector{Int64}+ : la demande du client $i$ est renseigné dans ce vecteur, ce qui facilitera son accès.
+    \item \verb+nbClients+ $=:n$ et \verb+capacite+ sont des entiers (on utilisera le type \verb+Int64+)
+    \item \verb+demande+ est un vecteur d'entiers \verb+Vector{Int64}+ : la demande du client $i$ est renseigné dans la case \verb+demande[+$i$\verb+]+, ce qui facilitera son accès.
     \item \verb+distance+ est une matrice à coefficients entiers \verb+Matrix{Int64}+. Ce type est équivalent à \verb+Array{Int64,2}+, ce qui sera utile pour manipuler des sous-matrices (restrictions de matrice).
 \end{itemize}
 
 \subsubsection{Ensemble des regroupements possibles : \texttt{S} ou $\Sc$}
 On rappelle que l'ensemble des regroupements possibles est défini par :
 \[\Sc := \Bigg\{ S \subseteq \llbracket 2,n \rrbracket : \sum_{j \in S} d_j \leq capacite \Bigg\} \]
-Il est clair que la manipulation d'ensembles (type \verb+Set+) est simple, mais elle demande des temps d'exécution plus importants.
+\smb Il est clair que la manipulation d'ensembles (type \verb+Set+) est simple, mais elle demande des temps d'exécution plus importants.
 Il est donc plus que nécessaire de recourir à un "vecteur de vecteurs" au lieu d'un "ensemble d'ensembles", d'où
 le type \verb+Vector{Vector{Int64}}+ pour l'ensemble des regroupements.
 
-\subsubsection{Ensemble d'ensembles d'indices de tournées visitant le $i$-ème client : \texttt{AllS\_i} ou $\{S_i \subseteq \llbracket 1, |\Sc| \rrbracket\}$ }
+\subsubsection{Ensemble d'ensembles d'indices de tournées visitant le $i$-ème client : \\ \texttt{AllS\_i} $= \{S_i \subseteq \llbracket 1, |\Sc| \rrbracket \: : \: \forall j \in S_i, \: i \in tournee_j\}_{i \in \llbracket 2 , n \rrbracket }$ }
 La contrainte garantissant que chaque client soit visité une seule fois est donnée par :
 \[ \sum_{j \in S_i} x_j = 1, i \in \llbracket 2,n \rrbracket, \]
 où $S_i \subseteq \llbracket 1, |\Sc| \rrbracket$ est le sous-ensemble d'indices des tournées
@@ -97,7 +97,7 @@ l_j = \min_{\text{\normalfont{TSP}}} \text{\normalfont{dist}}(tournee_j) \}$}
 La fonction objectif (à minimiser) s'écrit :
 \[ z = \sum_{j=1}^{|\Sc|} l_j x_j,\]
 où $l_j$ désigne la distance minimale du regroupement $j \in \llbracket 1,|\Sc| \rrbracket$, calculée par la
-fonction \verb+solveTSPExact+ de résolution du problème de voyageur de commerce (dit TSP).
+fonction \verb+solveTSPExact+ de résolution du problème de voyageur de commerce (dit TSP, pour \emph{Travelling Salesman Problem}).
 Ainsi, une telle expression requiert de lier cette distance à son regroupement via un accès immédiat.
 C'est pourquoi, le vecteur \verb+l+, constitué de couples $(tourn \text{é} e,distance_{\text{min}})$, intervient.
 Il est de type \verb+Vector{Tuple{Vector{Int64},Int64}}+.
@@ -118,7 +118,7 @@ où : \begin{itemize}
 \end{itemize}
 
 Derrière cette fonction, l'algorithme consiste à itérer (via \verb+index+) sur toutes les demandes des clients
-et vérifier si la demande du client $i \in \llbracket 2,n \rrbracket$, accumulée à \verb+d+, est conforme à la capacité. Ainsi,
+et à vérifier si la demande du client $i \in \llbracket 2,n \rrbracket$, accumulée à \verb+d+, est conforme à la capacité. Ainsi,
 pour le client $i$ : 
 \begin{enumerate}
     \item Si les demandes sommées sont en-dessous du seuil, on sauvegarde l'ensemble \verb+P+ des clients à ajouter dans \verb+toadd+
@@ -156,18 +156,97 @@ idem pour le deuxième, ainsi de suite... Puis, dans l'ordre, on a les correspon
     \item \dots
 \end{itemize}
 
+Ces correspondances donnent lieu à la "nouvelle" tournée, nommée \verb+newtournee+, qui est retournée.
 
 \section{Résolution approchée (brève)}
 
 \section{Analyse des résultats issus des instances numériques ($A$ et $B$)}
+
+Les tests ont été réalisés sur une configuration Ubuntu, épaulée d'un processeur double-coeur (et 4 threads) Intel Core i3 cadencé à 2,3 GHz et de 12 GB de RAM.
+
 \subsection{Résolution exacte}
 A l'aide de la macro \texttt{@time} de Julia, on a mesuré les temps d'exécution (en secondes) des fonctions principales et les allocations mémoires.
 Par ailleurs, on a également récupéré le nombre de regroupements pour chaque instance et les tailles minimale et maximale des regroupements.
 Ces résultats sont donnés par les tableaux suivants :
+
+\subsubsection{Instances $A$}
+
 \begin{center}
     \includegraphics[scale=0.50]{ResExacte_InstA.PNG}
+\end{center}
+
+    On note tout d'abord que, pour \verb+nbClients+ $=50$, on a l'ordre de grandeur du temps total CPU attendu : $\approx 30$ secondes.
+    \smb Globalement, la fonction de résolution du problème TSP prend le plus de temps à s'exécuter, devant les autres fonctions principales.
+    \smb En outre, l'allocation mémoire totale qui est très importante, au détriment du temps d'exécution.
+Cette allocation pourrait être améliorée par un code plus optimisé, une modification du typage (limiter la taille d'encodage d'un entier par exemple),
+et une limitation des déclarations de variables. Ceci étant dit, il ne faut pas oublier que le programme linéaire (qu'on écrira "PL" par la suite)
+donne lieu à autant de variables $x_j$ qu'il y a de tournées/regroupements. 
+
+\subsubsection{Instances $B$}
+
+\begin{center}
     \includegraphics[scale=0.55]{ResExacte_InstB.PNG}
 \end{center}
+
+L'exécution sur les instances $B$ prend bien plus de temps. En effet, la capacité y est légèrement supérieure ($capa_A = 30 < capa_B = 33$), et les demandes individuelles ont globalement légèrement diminué.
+Par exemple, dans \verb+VRPA15.dat+ (instance $A$ avec \verb+nbClients+ $=15$), on enregistre une demande moyenne de $9,93$,
+tandis que dans son homologue $B$, celle-ci atteint $5,4$.
+\smb Une telle modification des paramètres implique une accumulation de demandes $\sum_i d_i$ qui s’allonge derrière une capacité plus élevée. D’où davantage de regroupements possibles et de chances d'avoir plus de clients dans un regroupement...
+C'est pourquoi, la taille maximale d’un regroupement augmente aussi. Elle croit plus vite pour les instances $B$ que pour les instances $A$.
+\smb Enfin, la fonction de partionnement met davantage de temps à s’exécuter : il suffit de regarder la colonne pour \verb+nbClients+ $=30$ pour s’en rendre compte...
+Une telle augmentation de la taille des données (nombre de regroupements) suggère des traitements plus conséquents dans la fonction \verb+solveTSPExact+ !
+Qui dit davantage de tournées, dit davantage de variables $x_j$ ! Donc la résolution du PL s’effectue également en un temps bien plus conséquent.
+
+\subsubsection{Analyse graphique et rapports de comparaison}
+
+Puisque la résolution exacte sur les instances de $B$ de taille (au sens de \verb+nbClients+) supérieure à 30 n'aboutit pas en un temps raisonnable,
+on se concentre sur les instances $A$ et $B$ de taille au plus 30.
+Comparons face-à-face les graphiques des temps totaux CPU pour les deux types d'instances :
+\begin{center}
+    \includegraphics[scale=0.34]{GraphInstA30.PNG}
+    \includegraphics[scale=0.34]{GraphInstB30.PNG}
+\end{center}
+
+Le point le plus flagrant à souligner est la différence d'échelle de temps entre les deux graphiques. Celle-ci 
+atteste des temps totaux CPU bien plus importants enregistrés pour les instances $B$.
+\smb De plus, le temps total CPU pour les instances $A$ semble croître exponentiellement, ce qui n'est pas forcément
+le cas pour les instances $B$. En effet, sur le graphique de droite, on note un pic parasite à \verb+nbClients+ $=20$
+ainsi qu'une monotonie et une vitesse de croissance très irrégulières (les pics \verb+nbClients+ $\in \{20,30\}$ sont très soudains et les suivants doivent être pires).
+Des arguments précédents sur l'analyse des instances $B$ viennent confirmer une évolution du temps CPU aussi singulière.
+
+\smb Enfin, un tableau des rapports des temps totaux CPU et des tailles $|\Sc|$ des regroupements entre les instances $B$ et $A$
+est donné ci-dessous :
+
+\begin{center}
+    \includegraphics[scale=0.60]{Ratios.PNG}
+\end{center}
+
+ainsi que les graphiques témoignant de la croissance de ces rapports (le point parasite \verb+nbClients+ $=20$ est exclu) :
+\begin{center}
+    \includegraphics[scale=0.340]{GraphRatioSCallig.PNG}    
+    \includegraphics[scale=0.340]{GraphRatioTps.PNG}
+\end{center}
+
+Selon les données de l'instance, les regroupements peuvent être complètement différents, ce qui explique
+l'allure peu pertinente du graphique de gauche.
+\smb Cependant, à droite, le rapport du temps CPU est quasiment proportionnel (si \verb+nbClients+ $=10$ est l'origine)
+au nombre de clients. Ainsi, malgré tout, on peut se permettre d'approcher ce constat par : \\ $\exists \alpha \in \R \: : \forall n = \texttt{nbClients} \in \N,$
+\[ \dfrac{t_{\text{total},B}(n)}{t_{\text{total},A}(n)} \approx \alpha \cdot n , \]
+ce qui témoigne d'une évolution cohérente et raisonnable du temps total CPU en passant d'un type d'instance à un autre.
+
+\subsection{Résolution approchée}
+
+\subsection{Conclusion}
+De légères modifications des données (demandes et capacité) entre les instances suffisent à faire gonfler
+le nombre de regroupements possibles, à étendre les tournées,
+et ainsi à influer sévèrement les temps CPU, notamment dans la résolution du TSP.
+\smb Il est clair que, pour répondre en un temps court aux décideurs, la résolution approchée semble plus
+appropriée pour certaines instances telles que celles de type $B$. Voyons dans quelle mesure
+cette méthode est qualitative et pertinente.
+
+\section{Qualité de la solution admissible obtenue par la méthode \emph{approchée}}
+
+\section{Conclusion}
 
 
 
