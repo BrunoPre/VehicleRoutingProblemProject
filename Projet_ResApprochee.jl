@@ -118,7 +118,7 @@ end
 
 
 # fonction de prise des données et de résolution
-function data_then_solve_exact(filename::String)
+function data_then_solve_apppr(filename::String)
     # Conversion fichier -> structures de données
     data::donnees = lecture_donnees(filename)
     nbClients::Int64 = data.nbClients
