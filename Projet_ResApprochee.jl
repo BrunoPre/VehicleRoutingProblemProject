@@ -123,22 +123,6 @@ function fusioner(chemins::Vector{Vector{Int64}}, sortedGains::Vector{Tuple{Tupl
 end
 
 
-# fonction qui initialise les chemins du type 1->X->1 (X \in [|2,n|] )
-function initialiserChemins(demande::Vector{Int64})
-    index::Int64=2
-    chemins::Vector{Vector{Int64}}=[]
-    for d in demande
-        chemin=[index]
-        append!(chemins,[chemin])
-        index+=1
-    end
-    return chemins
-end
-
-# fonction triant le vecteur ((i,j),gij) dans l'ordre décroissant des gij
-function sortVector(toSort::Vector{Tuple{Tuple{Int64,Int64},Int64}})
-    return sort!(toSort,by = x -> x[2],rev=true)
-end
 
 
 function formatSolution(solution::Vector{Vector{Int64}})
@@ -155,37 +139,7 @@ function formatSolution(solution::Vector{Vector{Int64}})
 end
 
 
-# fonction de test (hors-sujet)
-function test()
-    #First test all subsets and respective shortest distances
-    data::donnees = lecture_donnees("exemple.dat") # fichier dans le même dossier (cf ex. du sujet)
-    d::Matrix{Int64} = data.distance
-    capa::Int64 = data.capacite
-    dmd::Vector{Int64} = data.demande
-    nbClients::Int64 = data.nbClients
 
-    G::Vector{Tuple{Tuple{Int64,Int64},Int64}} = calcGainVector(d)
-    println(G)
-    print(sortVector(G))
-
-    G = sortVector(G)
-    println(G)
-    println()
-    
-    initiale::Vector{Vector{Int64}}= initialiserChemins(dmd)
-    print(initiale)
-    println()
-
-    println(size(initiale[1])[1])
-
-    solution::Vector{Vector{Int64}}= fusioner(initiale,G, dmd,capa)
-    println(solution)
-    
-    finalSolution::Vector{Vector{Int64}}=formatSolution(solution)
-    println(finalSolution)
-
-
-end
 
 # fonction de prise des données et de résolution
 function data_then_solve_exact(filename::String)
@@ -259,6 +213,111 @@ function solveTSPExact(d::Matrix{Int64})
     return cycle, round(Int64,l)
 end
 
+#deuxième version comme dans le sujet
+function getIndex(el::Int64, sol::Vector{Tuple{Vector{Int64},Int64}})
+    fusion=sol[el][2]
+    if (fusion==0)
+        return el
+    end
+    return getIndex(fusion,sol)
+end
+function fusion(ai::Vector{Int64},bj::Vector{Int64},i::Int64,j::Int64)
+    if(ai[2]==i)
+        ai=reverse!(ai)
+    end
+    if (bj[size(bj)[1]-1]==j)
+        bj=!reverse(bj)
+    end
+    return append!(ai[1:size(ai)[1]-1],bj[2:size(bj)[1]])
+end
+
+function removeFusions(removeA::Int64, removeB::Int64, removeC::Tuple{Int64,Int64},ordered::Vector{Tuple{Tuple{Int64,Int64},Int64}})
+    if (removeC[1]>removeC[2])
+        removeC=(removeC[2],removeC[1])
+    end
+    i::Int64=1
+    for el in ordered
+        if(el[1][1]==removeA || el[1][1]==removeA || el[1][2]==removeA|| el[1][2]==removeB || el[1]==removeC)
+            ordered= deleteat!(ordered, i)
+        else
+            i+=1
+        end
+    end
+    return ordered
+end
+function solve(ordered::Vector{Tuple{Tuple{Int64,Int64},Int64}}, sol::Vector{Tuple{Vector{Int64},Int64}}, demande::Vector{Int64}, capacité::Int64)
+    for el in ordered
+        firstEl::Int64=el[1][1]-1
+        secondEl::Int64=el[1][2]-1
+        indexFirst::Int64 = getIndex(firstEl,sol)
+        indexSecond::Int64=getIndex(secondEl,sol)
+        lengthOld::Int64=size(sol[indexFirst][1])[1]
+        if(demande[indexFirst]+demande[indexSecond]<=capacité)
+            fusioned = fusion(sol[indexFirst][1],sol[indexSecond][1],firstEl,secondEl)
+            if(fusioned[2]==firstEl)
+                firstEl=0
+            end
+            if(fusioned[lengthOld+1]==1)
+                secondEl=0
+            end
+            if (size(fusioned)[1]>4)
+                ordered=removeFusions(firstEl,secondEl,(fusioned[2],fusioned[size(fusioned)[1]-1]),ordered)
+            end
+            overwriteFirst=(fusioned,0)
+            overwriteSecond=([],indexFirst)
+            sol[indexFirst]=overwriteFirst
+            sol[indexSecond]=overwriteSecond
+            demande[indexFirst]=demande[indexFirst]+demande[indexSecond]
+        end
+    end
+    return sol
+end
+
+# fonction qui initialise les chemins du type 1->X->1 (X \in [|2,n|] )
+function initialiserChemins(demande::Vector{Int64})
+    index::Int64=2
+    chemins::Vector{Tuple{Vector{Int64},Int64}}=[]
+    for d in demande
+        chemin::Vector{Int64}=[1,index,1]
+        toPush::Tuple{Vector{Int64},Int64}=(chemin,0)
+        push!(chemins,toPush)
+        index+=1
+    end
+    return chemins
+end
+
+# fonction triant le vecteur ((i,j),gij) dans l'ordre décroissant des gij
+function sortVector(toSort::Vector{Tuple{Tuple{Int64,Int64},Int64}})
+    return sort!(toSort,by = x -> x[2],rev=true)
+end
+
+# fonction de test (hors-sujet)
+function test()
+    #First test all subsets and respective shortest distances
+    data::donnees = lecture_donnees("exemple.dat") # fichier dans le même dossier (cf ex. du sujet)
+    d::Matrix{Int64} = data.distance
+    capa::Int64 = data.capacite
+    dmd::Vector{Int64} = data.demande
+    nbClients::Int64 = data.nbClients
+
+    G::Vector{Tuple{Tuple{Int64,Int64},Int64}} = calcGainVector(d)
+    println(G)
+    print(sortVector(G))
+
+    G = sortVector(G)
+    println(G)
+    println()
+    
+    sol::Vector{Tuple{Vector{Int64},Int64}}= initialiserChemins(dmd)
+    print(sol)
+    println()
+
+
+    solution::Vector{Tuple{Vector{Int64},Int64}}= solve(G,sol, dmd,capa)
+    println(solution)
+    
+
+end
 #=
 # Exemple d'application de solveTSPExact() sur le problème de l'exercice 2.5
 # Valeur retournée : ([7, 1, 5, 6, 2, 3, 4], 2575.0)
