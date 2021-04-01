@@ -93,6 +93,7 @@ function calcGainVector(d::Matrix{Int64})
     return G
 end
 
+#=
 #fonction prend la solution et réalise la fusion de chemins
 function fusioner(chemins::Vector{Vector{Int64}}, sortedGains::Vector{Tuple{Tuple{Int64,Int64},Int64}}, demande::Vector{Int64}, capacite::Int64)
     saveFusions::Vector{Int64} =[]   #Vecteur pour garder l'information si deux chemins sont fusionnés
@@ -101,7 +102,7 @@ function fusioner(chemins::Vector{Vector{Int64}}, sortedGains::Vector{Tuple{Tupl
         append!(saveFusions,index)
         index+=1
     end
-    for gain in sortedGains                 # on itère sur tous les gains
+    for gain in sortedGains                 # on itère sur tous les gains (toujours dans le sens décroissant)
         fusionA = saveFusions[gain[1][1]-1]       # pour chaque gain, on prend les indices (i,j) associés à ce gain
         fusionB = saveFusions[gain[1][2]-1]
         println(fusionA != fusionB && demande[fusionA]+demande[fusionB]<=capacite)
@@ -137,6 +138,7 @@ function formatSolution(solution::Vector{Vector{Int64}})
     return formatedSolution
 
 end
+=#
 
 
 
@@ -150,8 +152,25 @@ function data_then_solve_exact(filename::String)
     capa::Int64 = data.capacite
     dmd::Vector{Int64} = data.demande
 
+    # vecteur des gains ((i,j),gij)
+    G::Vector{Tuple{Tuple{Int64,Int64},Int64}} = calcGainVector(d)
+
+    # tri décroissant par gij
+    G = sortVector(G)
+    
+    # Initialisation des tournées élémentaires pour la fusion
+    elementaryCycles::Vector{Tuple{Vector{Int64},Int64}}= initialiserChemins(dmd)
+
+    # tournées fusionnées
+    fusionnedCycles::Vector{Tuple{Vector{Int64},Int64}}= getAllFusionnedCycles(G,elementaryCycles, dmd,capa)
+
+    # formattage des tournées
+    fusionnedCycles = formatCycles(fusionnedCycles)
+
+
+    #=
     # A MODIFIER création du modèle à partir des données
-    #= m::Model = model_exact(GLPK.Optimizer,AllS_i,nbClients,l,nbRegroup)
+    m::Model = model_appr(GLPK.Optimizer,AllS_i,nbClients,l,nbRegroup)
 
     # résolution
     optimize!(m)
@@ -181,7 +200,7 @@ function data_then_solve_exact(filename::String)
     elseif status == MOI.INFEASIBLE_OR_UNBOUNDED
         println("Problème impossible")
     end
-    =#
+=#
 end
 
 # exécution de data_then_solve, avec le timer
@@ -213,74 +232,94 @@ function solveTSPExact(d::Matrix{Int64})
     return cycle, round(Int64,l)
 end
 
-#deuxième version comme dans le sujet
-#La structure  pour la ressulotion approché est le suivant: 
-#- On a le vecteur ordered qui contient tout le fusion possible dans une triés par ordre décroissant en fonction de le gaim associé à cett foncttion
-#- Le vecteur des tuples sol. Il contient le solution et l'information si les solution étais déjà fusioner et si oui avec quel solution. Les premier également
-#de chaque tuple contient le chemin come une vecteur de la form [1,...,1]. Les deuxiéme élément est une intéger qui done l'info dans quel solution cette solution 
-#était fusioner. Dans cette cas le vecteur au position 1 est vide. Initiallement les integers qui porte l'information de la fusion sont mis à 0.
-function solve(ordered::Vector{Tuple{Tuple{Int64,Int64},Int64}}, sol::Vector{Tuple{Vector{Int64},Int64}}, demande::Vector{Int64}, capacité::Int64)
-    for el in ordered                   #itération à travers toutes les fusions 
-        firstEl::Int64=el[1][1]-1       #prends premier élement de chaque fusion
-        secondEl::Int64=el[1][2]-1      #prends deuxième élement de chque fusion
-        indexFirst::Int64 = getIndex(firstEl,sol)   #trouve l'index de la solution qui corresponde à cette fonction (peut differ à cause précédents fusions)
-        indexSecond::Int64=getIndex(secondEl,sol)   #Même action pour le deuxiéme élement 
-        lengthOld::Int64=size(sol[indexFirst][1])[1]   #garder la taille pour savoir aprés si il faut enlever des fusions
-        if(demande[indexFirst]+demande[indexSecond]<=capacité) #si la demande est plus pétit que la capacité on fusion
-            fusioned::Vector{Int64} = fusion(sol[indexFirst][1],sol[indexSecond][1],firstEl+1,secondEl+1)    #réaliser cette fusion (on a comme resulatat une array qui contien la nouveau solutioon) 
-            if(fusioned[2]==firstEl+1)                              #dans cette cas on veut pas enlever les solution qui contient cette élement
+#= deuxième version comme dans le sujet
+Les structures de données employéees pour la résolution approchée sont les suivantes : 
+* Retournée par la fonction calcGainVector, le vecteur "ordered" contient toutes les fusions possibles ((i,j),gij), 
+triées dans l'ordre décroissant des gains ;
+* Le vecteur des tuples "sol". Un tuple contient une solution de tournée et un entier, et il décrit si la solution a déjà subi une fusion.
+    Le cas échéant, le tuple renseigne avec quelle autre tournée la fusion a eu lieue :
+    ** La première composante du tuple est une solution de tournée (vecteur) de la forme [1,...,1]. 
+    ** La deuxième composante est un entier qui indique avec quelle autre tournée cette solution a été fusionée. 
+    Dans ce cas, la première composante est un vecteur vide. Initialement les entiers qui portent l'information de la fusion sont mis à 0.
+=#
+function getAllFusionnedCycles(ordered::Vector{Tuple{Tuple{Int64,Int64},Int64}}, sol::Vector{Tuple{Vector{Int64},Int64}}, demande::Vector{Int64}, capacité::Int64)
+
+    for el in ordered                   #itération sur toutes les fusions possibles
+        firstEl::Int64=el[1][1]-1       #premier client
+        secondEl::Int64=el[1][2]-1      #deuxième client
+        indexFirst::Int64 = getIndex(firstEl,sol)   #trouver l'index de la fusion dans laquelle se trouve le premier client (il peut différer à cause de précédentes fusions)
+        indexSecond::Int64=getIndex(secondEl,sol)   #Même action pour le deuxième client
+        lengthOld::Int64=size(sol[indexFirst][1])[1]   #sauvegarder la taille de la fusion pour savoir après s'il faut enlever des fusions
+
+        if(demande[indexFirst]+demande[indexSecond]<=capacité) #si la demande est plus petite que la capacité, alors on fusionnne
+            fusioned::Vector{Int64} = fusion(sol[indexFirst][1], sol[indexSecond][1], firstEl+1, secondEl+1)    # réaliser cette fusion (le résultat est un array qui contient la nouvelle solution) 
+            if(fusioned[2]==firstEl+1)      #ceci signifie que fusionned[2] contient le premier client, donc on veut pas enlever cette solution
                 firstEl=0
             end
-            if(fusioned[lengthOld+1]==1)                            #même pour le deuxiéme èlémen
+            if(fusioned[lengthOld+1]==1)    #idem pour le deuxième élément
                 secondEl=0
             end
-            if (size(fusioned)[1]>4)                                #Si le taile est plus grande que quatre on enléve pour fusion = [1,a,...,,b,1] au moins le couple (a,b) pour a < b
+            if (size(fusioned)[1]>4)        #Si la taille dépasse 4,alors on enlève les clients (a,b) (a < b) dans la fusion = [1,a,...,b,1]
                 ordered=removeFusions(firstEl,secondEl,(fusioned[2],fusioned[size(fusioned)[1]-1]),ordered)
             end
-            overwriteFirst=(fusioned,0)                             #le nouveau solution 
-            overwriteSecond=([],indexFirst)                          #on actualiser aussi l'élement qui était fusioner avec l'index ou l'element est maintenant à cause de la fusion
+            overwriteFirst=(fusioned,0)                             #la nouvelle solution 
+            overwriteSecond=([],indexFirst)                         #on actualise aussi l'élément qui a été fusionné avec l'index indiquant où se trouve l'élement suite à la fusion
             sol[indexFirst]=overwriteFirst                          #on garde ces informations dans l'array des solutions
             sol[indexSecond]=overwriteSecond
-            demande[indexFirst]=demande[indexFirst]+demande[indexSecond]        #on actualiser la demande
+            demande[indexFirst]=demande[indexFirst]+demande[indexSecond]        #on actualise la demande
         end
+        
     end
     return sol
 end
-#cette fonction retoure recursivement l'index de la solution dans lequel une certain élement était fusionnés
-function getIndex(el::Int64, sol::Vector{Tuple{Vector{Int64},Int64}})           #
+
+#fonction récursive donnant l'index de la solution dans laquelle un certain élement "el" a été fusionné
+function getIndex(el::Int64, sol::Vector{Tuple{Vector{Int64},Int64}})           
     fusion=sol[el][2]
     if (fusion==0)
         return el
     end
     return getIndex(fusion,sol)
 end
-#Cette fonction réalise la fusion
-function fusion(ai::Vector{Int64},bj::Vector{Int64},i::Int64,j::Int64)                                   
-    if(ai[2]==i)                #alors a a le form 1,i......1
-        if(bj[size(bj)[1]-1]==j && size(ai)[1]!=3)    #si b a le form 1....j,1 on retourne b+a sauf le cas ou a = 1,i,1
+
+#fonction réalisant une fusion
+function fusion(ai::Vector{Int64},bj::Vector{Int64},i::Int64,j::Int64)   
+
+    if(ai[2]==i)                #alors ai est de la forme [1,i,...,1]
+        if(bj[size(bj)[1]-1]==j && size(ai)[1]!=3)    #si bj est de la forme [1,...,j,1] on retourne b+a, sauf dans le cas où ai = [1,i,1] (tournée élémentaire)
                 return append!(bj[1:size(bj)[1]-1],ai[2:size(ai)[1]]) 
-        end                                     #sinon forcement b a le form 1,j,....,1 alors on iverse a et retourne a +b       
-        ai=reverse(ai)                           #alors on inverse a et on retourne a+b
+        end                                     #sinon, bj est forcément de la forme [1,j,...,1]      
+        ai=reverse(ai)                           #ainsi on inverse ai et on retourne la concaténation de ai et bi
         return append!(ai[1:size(ai)[1]-1],bj[2:size(bj)[1]])
     end
-    if(bj[size(bj)[1]-1]==j)                    #ici on sait que a a le form 1....i,1 le seule cas qui peut être problematic est si b a le form 1.....j1 dans cette cas on inverse b
+
+    if(bj[size(bj)[1]-1]==j)                    #ici on sait que ai est de la forme [1,...,i,1]. Le seul cas qui peut être problématique est si bj est de la forme [1,...,j,1]. Dans ce cas, on inverse b
         bj=reverse(bj)
     end
-    return append!(ai[1:size(ai)[1]-1],bj[2:size(bj)[1]])   #après on retourne a +b
+    return append!(ai[1:size(ai)[1]-1],bj[2:size(bj)[1]])   #après on retourne la concaténation de ai et bi
 end
             
-#Cette fonction prende les fusion et trois arguments et il iterer une fois sur tous les fonctions et enlever les éléments déterminer par les élements. Pour chque fusion ou il y a plus de 5 elements 
-# si le resultat est 1a....b1 on enleve au moi le tuple a b ici l'argument removeC. Si on a fait une fusion de la form 1....ij......1 on peut enlever aussi i et je ici removeA et removeB. Si on veut pas 
-#enlever ces élements on tout simplement appelle la fonction avec des 0 comme argument
+#= fonction prenant les fusions de "ordered" et trois arguments et
+elle itère une fois sur tous les fusions et elle enlève les fusions données par les arguments "removeA", "removeB", "removeC". 
+Pour chque fusion où il y a plus de 5 éléments,
+si le résultat est de la forme [1,a,...,b,1], alors on enlève au moins les clients (a,b) donnés par "removeC". 
+Si on a fait une fusion de la forme [1,...,i,j,...,1], alors on peut enlever aussi i et j, respectivement donnés par
+"removeA" et "removeB". 
+Si on veut pas enlever ces élements, "removeA" et "removeB" sont mis à 0 dans la fonction "getAllFusionnedCycles"
+=#
 
-function removeFusions(removeA::Int64, removeB::Int64, removeC::Tuple{Int64,Int64},ordered::Vector{Tuple{Tuple{Int64,Int64},Int64}})
-    if (removeC[1]>removeC[2])
-        removeC=(removeC[2],removeC[1])                         #il faut que le tuple a le form (a,b) a<b
+function removeFusions(removeA::Int64, removeB::Int64, removeC::Tuple{Int64,Int64}, ordered::Vector{Tuple{Tuple{Int64,Int64},Int64}})
+
+    if (removeC[1]>removeC[2])      #il faut que le tuple soit de la forme (a,b), avec a<b
+        removeC=(removeC[2],removeC[1])            # si ce n'est pas le cas, on renverse le couple             
     end
-    i::Int64=1                                                    #index pour suprimer l'élement qui corresponde 
+
+    i::Int64=1                                                    #index pour supprimer la fusion qui correspond
+
     for el in ordered
-        if(el[1][1]==removeA || el[1][1]==removeA || el[1][2]==removeA|| el[1][2]==removeB || el[1]==removeC)           #Est-ce que removeA ou removeB dans le tuple ou est-ce que le tuple est égale à removeC
-            ordered= deleteat!(ordered, i)                                                                              #si ou on suprime
+        #Est-ce que removeA ou removeB sont dans le couple de la fusion regardée ? ou est-ce que le couple est égale à removeC ?
+        if(el[1][1]==removeA || el[1][1]==removeA || el[1][2]==removeA|| el[1][2]==removeB || el[1]==removeC)           
+            ordered= deleteat!(ordered, i)                                                                              #si oui, on supprime ce couple
         else
             i+=1
         end
@@ -288,7 +327,7 @@ function removeFusions(removeA::Int64, removeB::Int64, removeC::Tuple{Int64,Int6
     return ordered
 end
 
-# fonction qui initialise les chemins du type 1->X->1 (X \in [|2,n|] ) et donne 0 comme deuxième argument , parce qu'il y aucune fusion d'abord
+# fonction qui initialise les chemins du type 1->X->1 (X \in [|2,n|] ) et donne 0 comme deuxième argument, parce qu'il n'y a aucune fusion au départ
 function initialiserChemins(demande::Vector{Int64})
     index::Int64=2
     chemins::Vector{Tuple{Vector{Int64},Int64}}=[]
@@ -301,6 +340,17 @@ function initialiserChemins(demande::Vector{Int64})
     return chemins
 end
 
+#fonction de mise en forme des tournées 
+function formatCycles(allCycles::Vector{Tuple{Vector{Int64},Int64}})
+    newallCycles::Vector{Vector{Int64}} = []
+    for cycle in allCycles
+        if (cycle[2]==0)
+            push!(newallCycles,sol[1])
+        end
+    end
+    return newallCycles
+end
+
 # fonction triant le vecteur ((i,j),gij) dans l'ordre décroissant des gij
 function sortVector(toSort::Vector{Tuple{Tuple{Int64,Int64},Int64}})
     return sort!(toSort,by = x -> x[2],rev=true)
@@ -309,7 +359,7 @@ end
 # fonction de test (hors-sujet)
 function test()
     #First test all subsets and respective shortest distances
-    data::donnees = lecture_donnees("exemple.dat") # fichier dans le même dossier (cf ex. du sujet)
+    data::donnees = lecture_donnees("A/VRPA15.dat") # fichier dans le même dossier (cf ex. du sujet)
     d::Matrix{Int64} = data.distance
     capa::Int64 = data.capacite
     dmd::Vector{Int64} = data.demande
@@ -328,7 +378,7 @@ function test()
     println()
 
 
-    solution::Vector{Tuple{Vector{Int64},Int64}}= solve(G,sol, dmd,capa)
+    solution::Vector{Tuple{Vector{Int64},Int64}}= getAllFusionnedCycles(G,sol, dmd,capa)
     println(solution)
     println("Les resultats sont")
     for sol in solution
