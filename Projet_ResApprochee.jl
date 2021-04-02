@@ -178,24 +178,24 @@ triées dans l'ordre décroissant des gains ;
     Dans ce cas, la première composante est un vecteur vide. Initialement les entiers qui portent l'information de la fusion sont mis à 0.
 =#
 function getAllFusionnedCycles(ordered::Vector{Tuple{Tuple{Int64,Int64},Int64}}, sol::Vector{Tuple{Vector{Int64},Int64}}, demande::Vector{Int64}, capacité::Int64)
-
+    i::Int64=1                          #index pour pour donner la position de la fusion actuel à la fonction "fusioner"
     for el in ordered                   #itération sur toutes les fusions possibles
         firstEl::Int64=el[1][1]-1       #premier client
         secondEl::Int64=el[1][2]-1      #deuxième client
         indexFirst::Int64 = getIndex(firstEl,sol)   #trouver l'index de la fusion dans laquelle se trouve le premier client (il peut différer à cause de précédentes fusions)
         indexSecond::Int64=getIndex(secondEl,sol)   #Même action pour le deuxième client
-        lengthOld::Int64=size(sol[indexFirst][1])[1]   #sauvegarder la taille de la fusion pour savoir après s'il faut enlever des fusions
-
+        lengthFirst::Int64=size(sol[indexFirst][1])[1]   #sauvegarder la taille de la fusion pour savoir après s'il faut enlever des fusions
+        lengthSecond::Int64=size(sol[indexSecond][1])[1] 
         if(demande[indexFirst]+demande[indexSecond]<=capacité) #si la demande est plus petite que la capacité, alors on fusionnne
             fusioned::Vector{Int64} = fusion(sol[indexFirst][1], sol[indexSecond][1], firstEl+1, secondEl+1)    # réaliser cette fusion (le résultat est un array qui contient la nouvelle solution) 
-            if(fusioned[2]==firstEl+1)      #ceci signifie que fusionned[2] contient le premier client, donc on veut pas enlever cette solution
-                firstEl=0
+            if(lengthFirst==3)      #ceci signifie que fusionned[2] contient le premier client, donc on veut pas enlever cette solution
+                firstEl=-1
             end
-            if(fusioned[lengthOld+1]==1)    #idem pour le deuxième élément
-                secondEl=0
+            if(lengthSecond==3)    #idem pour le deuxième élément
+                secondEl=-1
             end
-            if (size(fusioned)[1]>4)        #Si la taille dépasse 4,alors on enlève les clients (a,b) (a < b) dans la fusion = [1,a,...,b,1]
-                ordered=removeFusions(firstEl,secondEl,(fusioned[2],fusioned[size(fusioned)[1]-1]),ordered)
+            if (size(fusioned)[1]>4 && i+1!= size(ordered)[1])        #Si la taille dépasse 4,alors on enlève les clients (a,b) (a < b) dans la fusion = [1,a,...,b,1]
+                ordered=removeFusions(firstEl+1,secondEl+1,(fusioned[2],fusioned[size(fusioned)[1]-1]),ordered, i+1)
             end
             overwriteFirst=(fusioned,0)                             #la nouvelle solution 
             overwriteSecond=([],indexFirst)                         #on actualise aussi l'élément qui a été fusionné avec l'index indiquant où se trouve l'élement suite à la fusion
@@ -203,6 +203,7 @@ function getAllFusionnedCycles(ordered::Vector{Tuple{Tuple{Int64,Int64},Int64}},
             sol[indexSecond]=overwriteSecond
             demande[indexFirst]=demande[indexFirst]+demande[indexSecond]        #on actualise la demande
         end
+        i+=1
         
     end
     return sol
@@ -219,19 +220,27 @@ end
 
 #fonction réalisant une fusion
 function fusion(ai::Vector{Int64},bj::Vector{Int64},i::Int64,j::Int64)   
-
-    if(ai[2]==i)                #alors ai est de la forme [1,i,...,1]
-        if(bj[size(bj)[1]-1]==j && size(ai)[1]!=3)    #si bj est de la forme [1,...,j,1] on retourne b+a, sauf dans le cas où ai = [1,i,1] (tournée élémentaire)
-                return append!(bj[1:size(bj)[1]-1],ai[2:size(ai)[1]]) 
-        end                                     #sinon, bj est forcément de la forme [1,j,...,1]      
-        ai=reverse(ai)                           #ainsi on inverse ai et on retourne la concaténation de ai et bi
-        return append!(ai[1:size(ai)[1]-1],bj[2:size(bj)[1]])
+    sia= size(ai)[1]
+    sib= size(bj)[1]
+    if(sia==3)
+        if( bj[2]==j)                                                   #cas o`ai = [1,i,1] et bj = [1,...,j,1]
+            return append!(ai[1:sia-1],bj[2:sib])                       #Alors on retoure bj+ai=[1,...,j,i,1]
+        end
+        return append!(bj[1:size(bj)[1]-1],ai[2:size(ai)[1]])           #Cas où ai = [1,i,1] et bj = [1,j,...,11]  alors on retour ai+bj= [1,i,j,...,1]
     end
-
-    if(bj[size(bj)[1]-1]==j)                    #ici on sait que ai est de la forme [1,...,i,1]. Le seul cas qui peut être problématique est si bj est de la forme [1,...,j,1]. Dans ce cas, on inverse b
-        bj=reverse(bj)
+    if (ai[2]!=i)                                                       #Cas où ai  ai = [1,...,i,1] où ...!= {} 
+        if (bj[2]==j)                                                     
+            return append!(ai[1:sia-1],bj[2:sib])                       #Alors si bj= [1,j,...,1] on retour ai+bj=[1,...,i,j,...1]
+        end
+        bj=reverse(bj)                                                  
+        return append!(ai[1:sia-1],bj[2:sib])                           #Ici  ai = [1,...,i,1] où ...!= {} et bj = [1,...,j,1] alors on retour ai+inverse(bj)= [1,...,i,j,...1]
+    end    
+    if(bj[sib-1]==j)
+        return append!(bj[1:size(bj)[1]-1],ai[2:size(ai)[1]])           #Ici on a  ai = [1,i,...,1] où ...!= {} alors si bj = [1,...,j,1] on retour bj+ai= [1,...,j,i,...,1]
     end
-    return append!(ai[1:size(ai)[1]-1],bj[2:size(bj)[1]])   #après on retourne la concaténation de ai et bi
+    bj=reverse(bj)                              
+    return append!(ai[1:sia-1],bj[2:sib])                               #Ici on a  ai = [1,i,...,1] où ...!= {} et bj = [1,j,...,,1] on retour ai+inverse(bj)= [1,...,i,j,...,1]                            
+  #après on retourne la concaténation de ai et bi
 end
             
 #= fonction prenant les fusions de "ordered" et trois arguments et
@@ -243,20 +252,18 @@ Si on a fait une fusion de la forme [1,...,i,j,...,1], alors on peut enlever aus
 Si on veut pas enlever ces élements, "removeA" et "removeB" sont mis à 0 dans la fonction "getAllFusionnedCycles"
 =#
 
-function removeFusions(removeA::Int64, removeB::Int64, removeC::Tuple{Int64,Int64}, ordered::Vector{Tuple{Tuple{Int64,Int64},Int64}})
+function removeFusions(removeA::Int64, removeB::Int64, removeC::Tuple{Int64,Int64}, ordered::Vector{Tuple{Tuple{Int64,Int64},Int64}}, index::Int64)
 
     if (removeC[1]>removeC[2])      #il faut que le tuple soit de la forme (a,b), avec a<b
         removeC=(removeC[2],removeC[1])            # si ce n'est pas le cas, on renverse le couple             
     end
-
-    i::Int64=1                                                    #index pour supprimer la fusion qui correspond
-
-    for el in ordered
+                                                
+    while index < size(ordered)[1]                          #l'index est donné comme argument par la fonction "getAllFusionnedCycles", comme ca on regarde par les élements qui était deja fusioner
         #Est-ce que removeA ou removeB sont dans le couple de la fusion regardée ? ou est-ce que le couple est égale à removeC ?
-        if(el[1][1]==removeA || el[1][1]==removeA || el[1][2]==removeA|| el[1][2]==removeB || el[1]==removeC)           
-            ordered= deleteat!(ordered, i)                                                                              #si oui, on supprime ce couple
+        if(ordered[index][1][1]==removeA || ordered[index][1][1]==removeA || ordered[index][1][2]==removeB|| ordered[index][1][2]==removeB || ordered[index][1]==removeC)           
+            ordered= deleteat!(ordered, index)                                                                              #si oui, on supprime ce couple
         else
-            i+=1
+            index+=1
         end
     end
     return ordered
