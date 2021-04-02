@@ -69,106 +69,9 @@ function calcGainVector(d::Matrix{Int64})
     return G
 end
 
-#=
-#fonction prend la solution et réalise la fusion de chemins
-function fusioner(chemins::Vector{Vector{Int64}}, sortedGains::Vector{Tuple{Tuple{Int64,Int64},Int64}}, demande::Vector{Int64}, capacite::Int64)
-    saveFusions::Vector{Int64} =[]   #Vecteur pour garder l'information si deux chemins sont fusionnés
-    index::Int64=1
-    for ch in chemins           #Initialisation de ce vecteur. Tout d'abord chaque indice correspond au chemin qui lui est assossié
-        append!(saveFusions,index)
-        index+=1
-    end
-    for gain in sortedGains                 # on itère sur tous les gains (toujours dans le sens décroissant)
-        fusionA = saveFusions[gain[1][1]-1]       # pour chaque gain, on prend les indices (i,j) associés à ce gain
-        fusionB = saveFusions[gain[1][2]-1]
-        println(fusionA != fusionB && demande[fusionA]+demande[fusionB]<=capacite)
-        if (fusionA != fusionB && demande[fusionA]+demande[fusionB]<=capacite)       #si fusionA=fusionB, alors la fusion a déjà eu lieu. On ne fait rien, même dans le cas où la demande de la fusion dépasse la capacité
-            saveFusions[gain[1][2]-1] =fusionA                                        #Autrement, on fait la fusion et on remplace la position "fusionB" de saveFusions par "fusionA"
-            demande[fusionA]= demande[fusionA]+demande[fusionB]                     #On actualise aussi la demande,
-            append!(chemins[fusionA],chemins[fusionB])                    #puis le chemin qui correspond à cette fonction
-            chemins[fusionB]=[-99]
-            i::Int64=1
-            while i <= size(saveFusions)[1]
-                if (saveFusions[i]==fusionB)
-                    saveFusions[i]=fusionA
-                end
-                i+=1
-            end
-        end    
-    end                                            #Le chemin à la position B n'existe plus. Il est maintenant inclus dans le chemin à la position fusionA. Alors on le supprime
-    return chemins
-end
 
-
-
-
-function formatSolution(solution::Vector{Vector{Int64}})
-    formatedSolution::Vector{Vector{Int64}}=[]
-    for sol in solution 
-        if (sol!= [-99])
-            sol=append!([1],sol)
-            append!(sol,[1])
-            push!(formatedSolution,sol)
-        end
-    end
-    return formatedSolution
-
-end
-=#
-
-
-# fonction de prise des données et de résolution
-function data_then_solve_apppr(filename::String)
-    # Conversion fichier -> structures de données
-    data::donnees = lecture_donnees(filename)
-    nbClients::Int64 = data.nbClients
-    distancier::Matrix{Int64} = data.distance
-    capa::Int64 = data.capacite
-    dmd::Vector{Int64} = data.demande
-
-    # vecteur des gains ((i,j),gij)
-    G::Vector{Tuple{Tuple{Int64,Int64},Int64}} = calcGainVector(distancier)
-
-    # tri décroissant par gij
-    G = sortVector(G)
-    
-    # Initialisation des tournées élémentaires pour la fusion
-    elementaryCycles::Vector{Tuple{Vector{Int64},Int64}}= initialiserChemins(dmd)
-
-    # tournées fusionnées
-    fusionnedCycles::Vector{Tuple{Vector{Int64},Int64}}= getAllFusionnedCycles(G,elementaryCycles, dmd,capa)
-
-    # formattage des tournées
-    formattedCycles::Vector{Vector{Int64}} = formatCycles(fusionnedCycles)
-
-    # affichages finaux tournée+distance totale
-    sumtot::Int64 = 0
-    distcycle::Int64 = 0
-
-    println("Les tournées retenues (C&W) sont :")
-
-    for cycle in formattedCycles
-        distcycle = calcLengthOfCycle(cycle,distancier)
-        sumtot = sumtot + distcycle
-        println("* ", cycle, ", longueur = ", distcycle)
-    end
-
-    println("Longueur totale : ", sumtot)
-end
-
-#calcul de la longueur totale d'une tournée "cycle", étant donné le distancier "d"
-function calcLengthOfCycle(cycle::Vector{Int64}, d::Matrix{Int64})
-    sum::Int64 = 0
-    i::Int64 = 1
-    while i+1 <= length(cycle)
-        sum = sum + d[cycle[i],cycle[i+1]]
-        i = i+1
-    end
-    return sum
-end
-
-#= deuxième version comme dans le sujet
-Les structures de données employéees pour la résolution approchée sont les suivantes : 
+#= fonction déterminant toutes les tournées fusionnées possibles
+Les structures de données employées pour la résolution approchée sont les suivantes : 
 * Retournée par la fonction calcGainVector, le vecteur "ordered" contient toutes les fusions possibles ((i,j),gij), 
 triées dans l'ordre décroissant des gains ;
 * Le vecteur des tuples "sol". Un tuple contient une solution de tournée et un entier, et il décrit si la solution a déjà subi une fusion.
@@ -178,7 +81,8 @@ triées dans l'ordre décroissant des gains ;
     Dans ce cas, la première composante est un vecteur vide. Initialement les entiers qui portent l'information de la fusion sont mis à 0.
 =#
 function getAllFusionnedCycles(ordered::Vector{Tuple{Tuple{Int64,Int64},Int64}}, sol::Vector{Tuple{Vector{Int64},Int64}}, demande::Vector{Int64}, capacité::Int64)
-    i::Int64=1                          #index pour pour donner la position de la fusion actuel à la fonction "fusioner"
+    i::Int64=1                          #index pour donner la position de la fusion actuelle à la fonction "fusion"
+
     for el in ordered                   #itération sur toutes les fusions possibles
         firstEl::Int64=el[1][1]-1       #premier client
         secondEl::Int64=el[1][2]-1      #deuxième client
@@ -186,15 +90,16 @@ function getAllFusionnedCycles(ordered::Vector{Tuple{Tuple{Int64,Int64},Int64}},
         indexSecond::Int64=getIndex(secondEl,sol)   #Même action pour le deuxième client
         lengthFirst::Int64=size(sol[indexFirst][1])[1]   #sauvegarder la taille de la fusion pour savoir après s'il faut enlever des fusions
         lengthSecond::Int64=size(sol[indexSecond][1])[1] 
+
         if(demande[indexFirst]+demande[indexSecond]<=capacité) #si la demande est plus petite que la capacité, alors on fusionnne
             fusioned::Vector{Int64} = fusion(sol[indexFirst][1], sol[indexSecond][1], firstEl+1, secondEl+1)    # réaliser cette fusion (le résultat est un array qui contient la nouvelle solution) 
-            if(lengthFirst==3)      #ceci signifie que fusionned[2] contient le premier client, donc on veut pas enlever cette solution
+            if(lengthFirst==3)      #ceci signifie que fusioned[2] contient le premier client, donc on veut pas enlever cette solution
                 firstEl=-1
             end
             if(lengthSecond==3)    #idem pour le deuxième élément
                 secondEl=-1
             end
-            if (size(fusioned)[1]>4 && i+1!= size(ordered)[1])        #Si la taille dépasse 4,alors on enlève les clients (a,b) (a < b) dans la fusion = [1,a,...,b,1]
+            if (size(fusioned)[1]>4 && i+1!= size(ordered)[1])        #Si la taille dépasse 4,alors on enlève les clients (a,b) (avec a < b) dans la fusion = [1,a,...,b,1]
                 ordered=removeFusions(firstEl+1,secondEl+1,(fusioned[2],fusioned[size(fusioned)[1]-1]),ordered, i+1)
             end
             overwriteFirst=(fusioned,0)                             #la nouvelle solution 
@@ -203,6 +108,7 @@ function getAllFusionnedCycles(ordered::Vector{Tuple{Tuple{Int64,Int64},Int64}},
             sol[indexSecond]=overwriteSecond
             demande[indexFirst]=demande[indexFirst]+demande[indexSecond]        #on actualise la demande
         end
+
         i+=1
         
     end
@@ -222,25 +128,36 @@ end
 function fusion(ai::Vector{Int64},bj::Vector{Int64},i::Int64,j::Int64)   
     sia= size(ai)[1]
     sib= size(bj)[1]
-    if(sia==3)
-        if( bj[2]==j)                                                   #cas o`ai = [1,i,1] et bj = [1,...,j,1]
-            return append!(ai[1:sia-1],bj[2:sib])                       #Alors on retoure bj+ai=[1,...,j,i,1]
+
+    # dans les commentaires suivants, on note la concaténation de ai et bj par "ai+bj"    
+
+    # cas trivial où ai = [1,i,1]
+    if (sia==3)
+        if( bj[2]==j)                                                   #si bj = [1,j,...,1]
+            return append!(ai[1:sia-1],bj[2:sib])                       #Alors on retoure ai+bj=[1,i,j,...,1]
         end
-        return append!(bj[1:size(bj)[1]-1],ai[2:size(ai)[1]])           #Cas où ai = [1,i,1] et bj = [1,j,...,11]  alors on retour ai+bj= [1,i,j,...,1]
+        return append!(bj[1:size(bj)[1]-1],ai[2:size(ai)[1]])           # sinon, i.e. bj = [1,...,j,1]. Alors on retourne bj+ai=[1,...,j,i,1]
     end
-    if (ai[2]!=i)                                                       #Cas où ai  ai = [1,...,i,1] où ...!= {} 
+
+    # si ai = [1,...,i,1]
+    if (ai[2]!=i)                                                       # où "..." n'est pas vide, i.e. ai n'est pas une tournée élémentaire 
         if (bj[2]==j)                                                     
-            return append!(ai[1:sia-1],bj[2:sib])                       #Alors si bj= [1,j,...,1] on retour ai+bj=[1,...,i,j,...1]
+            return append!(ai[1:sia-1],bj[2:sib])                       #Alors si bj= [1,j,...,1] on retourne ai+bj=[1,...,i,j,...,1]
         end
         bj=reverse(bj)                                                  
-        return append!(ai[1:sia-1],bj[2:sib])                           #Ici  ai = [1,...,i,1] où ...!= {} et bj = [1,...,j,1] alors on retour ai+inverse(bj)= [1,...,i,j,...1]
+        return append!(ai[1:sia-1],bj[2:sib])                           #Ici  ai = [1,...,i,1] et bj = [1,...,j,1] alors on retourne ai+inverse(bj)= [1,...,i,j,...1]
     end    
-    if(bj[sib-1]==j)
-        return append!(bj[1:size(bj)[1]-1],ai[2:size(ai)[1]])           #Ici on a  ai = [1,i,...,1] où ...!= {} alors si bj = [1,...,j,1] on retour bj+ai= [1,...,j,i,...,1]
+
+    # sinon ai = [1,i,...,1] n'est pas élémentaire
+    # et si bj = [1,...,j,1]
+    if (bj[sib-1]==j)
+        return append!(bj[1:size(bj)[1]-1],ai[2:size(ai)[1]])           # on retourne bj+ai= [1,...,j,i,...,1]
     end
-    bj=reverse(bj)                              
-    return append!(ai[1:sia-1],bj[2:sib])                               #Ici on a  ai = [1,i,...,1] où ...!= {} et bj = [1,j,...,,1] on retour ai+inverse(bj)= [1,...,i,j,...,1]                            
-  #après on retourne la concaténation de ai et bi
+
+    # toujours si ai = [1,i,...,1] n'est pas élémentaire, et si bj = [1,j,...,1]
+    ai=reverse(ai)                              
+    return append!(ai[1:sia-1],bj[2:sib])                     #on retourne inverse(ai)+bj= [1,...,i,j,...,1]                            
+
 end
             
 #= fonction prenant les fusions de "ordered" et trois arguments et
@@ -258,7 +175,7 @@ function removeFusions(removeA::Int64, removeB::Int64, removeC::Tuple{Int64,Int6
         removeC=(removeC[2],removeC[1])            # si ce n'est pas le cas, on renverse le couple             
     end
                                                 
-    while index < size(ordered)[1]                          #l'index est donné comme argument par la fonction "getAllFusionnedCycles", comme ca on regarde par les élements qui était deja fusioner
+    while index < size(ordered)[1]                          #l'index est donné par la fonction "getAllFusionnedCycles", ainsi on ne regarde pas les solutions qui étaient déjà fusionnées
         #Est-ce que removeA ou removeB sont dans le couple de la fusion regardée ? ou est-ce que le couple est égale à removeC ?
         if(ordered[index][1][1]==removeA || ordered[index][1][1]==removeA || ordered[index][1][2]==removeB|| ordered[index][1][2]==removeB || ordered[index][1]==removeC)           
             ordered= deleteat!(ordered, index)                                                                              #si oui, on supprime ce couple
@@ -298,6 +215,17 @@ function sortVector(toSort::Vector{Tuple{Tuple{Int64,Int64},Int64}})
     return sort!(toSort,by = x -> x[2],rev=true)
 end
 
+#calcul de la longueur totale d'une tournée "cycle", étant donné le distancier "d"
+function calcLengthOfCycle(cycle::Vector{Int64}, d::Matrix{Int64})
+    sum::Int64 = 0
+    i::Int64 = 1
+    while i+1 <= length(cycle)
+        sum = sum + d[cycle[i],cycle[i+1]]
+        i = i+1
+    end
+    return sum
+end
+
 # fonction de test (hors-sujet)
 function test()
     #First test all subsets and respective shortest distances
@@ -329,4 +257,43 @@ function test()
             println(sol[1])
         end
     end
+end
+
+# fonction de prise des données et de résolution
+function data_then_solve_appr(filename::String)
+    # Conversion fichier -> structures de données
+    data::donnees = lecture_donnees(filename)
+    nbClients::Int64 = data.nbClients
+    distancier::Matrix{Int64} = data.distance
+    capa::Int64 = data.capacite
+    dmd::Vector{Int64} = data.demande
+
+    # vecteur des gains ((i,j),gij)
+    G::Vector{Tuple{Tuple{Int64,Int64},Int64}} = calcGainVector(distancier)
+
+    # tri décroissant par gij
+    G = sortVector(G)
+    
+    # Initialisation des tournées élémentaires pour la fusion
+    elementaryCycles::Vector{Tuple{Vector{Int64},Int64}}= initialiserChemins(dmd)
+
+    # tournées fusionnées
+    fusionnedCycles::Vector{Tuple{Vector{Int64},Int64}}= getAllFusionnedCycles(G,elementaryCycles, dmd,capa)
+
+    # formattage des tournées
+    formattedCycles::Vector{Vector{Int64}} = formatCycles(fusionnedCycles)
+
+    # affichages finaux tournée+distance totale
+    sumtot::Int64 = 0
+    distcycle::Int64 = 0
+
+    println("Les tournées retenues (heuristique Clark & Wright) sont :")
+
+    for cycle in formattedCycles
+        distcycle = calcLengthOfCycle(cycle,distancier)
+        sumtot = sumtot + distcycle
+        println("* ", cycle, ", longueur = ", distcycle)
+    end
+
+    println("Longueur totale : ", sumtot)
 end
