@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.19 (TeX Live 2019/dev/Debian) (preloaded format=pdflatex 2020.10.26)  31 MAR 2021 15:26
+This is pdfTeX, Version 3.14159265-2.6-1.40.19 (TeX Live 2019/dev/Debian) (preloaded format=pdflatex 2020.10.26)  2 APR 2021 20:48
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -237,21 +237,21 @@ Package: makecell 2009/08/03 V0.1e Managing of Tab Column Heads and Cells
 ) (/home/bruno/RO/RO_project/rapport.aux)
 \openout1 = `rapport.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 37.
-LaTeX Font Info:    ... okay on input line 37.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 37.
-LaTeX Font Info:    ... okay on input line 37.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 37.
-LaTeX Font Info:    ... okay on input line 37.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 37.
-LaTeX Font Info:    ... okay on input line 37.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 37.
-LaTeX Font Info:    ... okay on input line 37.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 37.
-LaTeX Font Info:    ... okay on input line 37.
-LaTeX Info: Redefining \degres on input line 37.
-LaTeX Info: Redefining \dots on input line 37.
-LaTeX Info: Redefining \up on input line 37.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 38.
+LaTeX Font Info:    ... okay on input line 38.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 38.
+LaTeX Font Info:    ... okay on input line 38.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 38.
+LaTeX Font Info:    ... okay on input line 38.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 38.
+LaTeX Font Info:    ... okay on input line 38.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 38.
+LaTeX Font Info:    ... okay on input line 38.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 38.
+LaTeX Font Info:    ... okay on input line 38.
+LaTeX Info: Redefining \degres on input line 38.
+LaTeX Info: Redefining \dots on input line 38.
+LaTeX Info: Redefining \up on input line 38.
 
 *geometry* driver: auto-detecting
 *geometry* detected driver: pdftex
@@ -334,84 +334,96 @@ Package grfext Info: Graphics extension search list:
  (/usr/share/texlive/texmf-dist/tex/latex/latexconfig/epstopdf-sys.cfg
 File: epstopdf-sys.cfg 2010/07/13 v1.3 Configuration of (r)epstopdf for TeX Live
 ))
-LaTeX Font Info:    Try loading font information for U+msa on input line 40.
+LaTeX Font Info:    Try loading font information for U+msa on input line 41.
  (/usr/share/texlive/texmf-dist/tex/latex/amsfonts/umsa.fd
 File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 )
-LaTeX Font Info:    Try loading font information for U+msb on input line 40.
+LaTeX Font Info:    Try loading font information for U+msb on input line 41.
  (/usr/share/texlive/texmf-dist/tex/latex/amsfonts/umsb.fd
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 )
-LaTeX Font Info:    Try loading font information for U+stmry on input line 40.
+LaTeX Font Info:    Try loading font information for U+stmry on input line 41.
  (/usr/share/texlive/texmf-dist/tex/latex/stmaryrd/Ustmry.fd)
-LaTeX Font Info:    Try loading font information for T1+cmtt on input line 65.
- (/usr/share/texlive/texmf-dist/tex/latex/base/t1cmtt.fd
-File: t1cmtt.fd 2014/09/29 v2.5h Standard LaTeX font definitions
-)
-LaTeX Font Info:    Try loading font information for OMS+cmr on input line 70.
+LaTeX Font Info:    Try loading font information for OMS+cmr on input line 65.
  (/usr/share/texlive/texmf-dist/tex/latex/base/omscmr.fd
 File: omscmr.fd 2014/09/29 v2.5h Standard LaTeX font definitions
 )
 LaTeX Font Info:    Font shape `OMS/cmr/m/n' in size <10.95> not available
-(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 70.
+(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 65.
+LaTeX Font Info:    Try loading font information for T1+cmtt on input line 65.
+ (/usr/share/texlive/texmf-dist/tex/latex/base/t1cmtt.fd
+File: t1cmtt.fd 2014/09/29 v2.5h Standard LaTeX font definitions
+)
 LaTeX Font Info:    Font shape `T1/cmtt/bx/n' in size <10.95> not available
-(Font)              Font shape `T1/cmtt/m/n' tried instead on input line 75.
+(Font)              Font shape `T1/cmtt/m/n' tried instead on input line 88.
  [1
 
 {/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}] [2]
 LaTeX Font Info:    Font shape `T1/cmtt/bx/n' in size <12> not available
-(Font)              Font shape `T1/cmtt/m/n' tried instead on input line 136.
-<ResExacte_InstA.PNG, id=28, 1035.26775pt x 198.7425pt>
+(Font)              Font shape `T1/cmtt/m/n' tried instead on input line 149.
+ [3]
+<ResExacte_InstA.PNG, id=33, 1035.26775pt x 198.7425pt>
 File: ResExacte_InstA.PNG Graphic file (type png)
 <use ResExacte_InstA.PNG>
-Package pdftex.def Info: ResExacte_InstA.PNG  used on input line 175.
+Package pdftex.def Info: ResExacte_InstA.PNG  used on input line 217.
 (pdftex.def)             Requested size: 517.63261pt x 99.371pt.
- [3]
-<ResExacte_InstB.PNG, id=35, 784.73175pt x 198.7425pt>
+ [4 </home/bruno/RO/RO_project/ResExacte_InstA.PNG>]
+<ResExacte_InstB.PNG, id=42, 784.73175pt x 198.7425pt>
 File: ResExacte_InstB.PNG Graphic file (type png)
 <use ResExacte_InstB.PNG>
-Package pdftex.def Info: ResExacte_InstB.PNG  used on input line 188.
+Package pdftex.def Info: ResExacte_InstB.PNG  used on input line 230.
 (pdftex.def)             Requested size: 431.60379pt x 109.3087pt.
-<GraphInstA30.PNG, id=36, 734.745pt x 401.70074pt>
+<GraphInstA30.PNG, id=43, 734.745pt x 401.70074pt>
 File: GraphInstA30.PNG Graphic file (type png)
 <use GraphInstA30.PNG>
-Package pdftex.def Info: GraphInstA30.PNG  used on input line 206.
+Package pdftex.def Info: GraphInstA30.PNG  used on input line 248.
 (pdftex.def)             Requested size: 249.80998pt x 136.57643pt.
-<GraphInstB30.PNG, id=37, 764.25525pt x 413.74574pt>
+<GraphInstB30.PNG, id=44, 764.25525pt x 413.74574pt>
 File: GraphInstB30.PNG Graphic file (type png)
 <use GraphInstB30.PNG>
-Package pdftex.def Info: GraphInstB30.PNG  used on input line 207.
+Package pdftex.def Info: GraphInstB30.PNG  used on input line 249.
 (pdftex.def)             Requested size: 259.84334pt x 140.67169pt.
- [4 </home/bruno/RO/RO_project/ResExacte_InstA.PNG> </home/bruno/RO/RO_project/ResExacte_InstB.PNG>]
-<Ratios.PNG, id=43, 687.7695pt x 59.0205pt>
+<Ratios.PNG, id=45, 687.7695pt x 59.0205pt>
 File: Ratios.PNG Graphic file (type png)
 <use Ratios.PNG>
-Package pdftex.def Info: Ratios.PNG  used on input line 221.
+Package pdftex.def Info: Ratios.PNG  used on input line 263.
 (pdftex.def)             Requested size: 412.66489pt x 35.41255pt.
-<GraphRatioSCallig.PNG, id=44, 728.12025pt x 394.47375pt>
+ [5 </home/bruno/RO/RO_project/ResExacte_InstB.PNG> </home/bruno/RO/RO_project/GraphInstA30.PNG> </home/bruno/RO/RO_project/GraphInstB30.PNG>]
+<GraphRatioSCallig.PNG, id=52, 728.12025pt x 394.47375pt>
 File: GraphRatioSCallig.PNG Graphic file (type png)
 <use GraphRatioSCallig.PNG>
-Package pdftex.def Info: GraphRatioSCallig.PNG  used on input line 226.
+Package pdftex.def Info: GraphRatioSCallig.PNG  used on input line 268.
 (pdftex.def)             Requested size: 247.5576pt x 134.1193pt.
-<GraphRatioTps.PNG, id=45, 666.0885pt x 434.22224pt>
+<GraphRatioTps.PNG, id=53, 666.0885pt x 434.22224pt>
 File: GraphRatioTps.PNG Graphic file (type png)
 <use GraphRatioTps.PNG>
-Package pdftex.def Info: GraphRatioTps.PNG  used on input line 227.
+Package pdftex.def Info: GraphRatioTps.PNG  used on input line 269.
 (pdftex.def)             Requested size: 226.46709pt x 147.6336pt.
- [5 </home/bruno/RO/RO_project/GraphInstA30.PNG> </home/bruno/RO/RO_project/GraphInstB30.PNG> </home/bruno/RO/RO_project/Ratios.PNG> </home/bruno/RO/RO_project/GraphRatioSCallig.PNG> </home/bruno/RO/RO_project/GraphRatioTps.PNG>] [6] (/home/bruno/RO/RO_project/rapport.aux) ) 
+<AnalyseInstA.PNG, id=54, 993.11024pt x 230.66174pt>
+File: AnalyseInstA.PNG Graphic file (type png)
+<use AnalyseInstA.PNG>
+Package pdftex.def Info: AnalyseInstA.PNG  used on input line 300.
+(pdftex.def)             Requested size: 496.55391pt x 115.33058pt.
+ [6 </home/bruno/RO/RO_project/Ratios.PNG> </home/bruno/RO/RO_project/GraphRatioSCallig.PNG> </home/bruno/RO/RO_project/GraphRatioTps.PNG>]
+<AnalyseInstB.PNG, id=61, 998.5305pt x 231.86626pt>
+File: AnalyseInstB.PNG Graphic file (type png)
+<use AnalyseInstB.PNG>
+Package pdftex.def Info: AnalyseInstB.PNG  used on input line 303.
+(pdftex.def)             Requested size: 499.26404pt x 115.93283pt.
+ [7 </home/bruno/RO/RO_project/AnalyseInstA.PNG> </home/bruno/RO/RO_project/AnalyseInstB.PNG>] [8] (/home/bruno/RO/RO_project/rapport.aux) ) 
 Here is how much of TeX's memory you used:
- 6919 strings out of 492615
- 94302 string characters out of 6131389
- 185662 words of memory out of 5000000
- 10698 multiletter control sequences out of 15000+600000
- 24993 words of font info for 73 fonts, out of 8000000 for 9000
+ 6938 strings out of 492615
+ 94598 string characters out of 6131389
+ 186665 words of memory out of 5000000
+ 10714 multiletter control sequences out of 15000+600000
+ 25692 words of font info for 74 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 41i,6n,35p,655b,423s stack positions out of 5000i,500n,10000p,200000b,80000s
-{/usr/share/texmf/fonts/enc/dvips/cm-super/cm-super-t1.enc}</usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi12.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi6.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi8.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy8.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb></usr/share/texmf/fonts/type1/public/cm-super/sfbi1440.pfb></usr/share/texmf/fonts/type1/public/cm-super/sfbx1095.pfb></usr/share/texmf/fonts/type1/public/cm-super/sfbx1200.pfb></usr/share/texmf/fonts/type1/public/cm-super/sfbx1440.pfb></usr/share/texmf/fonts/type1/public/cm-super/sfrm0800.pfb></usr/share/texmf/fonts/type1/public/cm-super/sfrm1095.pfb></usr/share/texmf/fonts/type1/public/cm-super/sfrm1200.pfb></usr/share/texmf/fonts/type1/public/cm-super/sfrm1728.pfb></usr/share/texmf/fonts/type1/public/cm-super/sfti1095.pfb></usr/share/texmf/fonts/type1/public/cm-super/sftt1095.pfb></usr/share/texmf/fonts/type1/public/cm-super/sftt1200.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/stmaryrd/stmary10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/stmaryrd/stmary8.pfb>
-Output written on /home/bruno/RO/RO_project/rapport.pdf (6 pages, 509355 bytes).
+ 41i,9n,35p,655b,423s stack positions out of 5000i,500n,10000p,200000b,80000s
+{/usr/share/texmf/fonts/enc/dvips/cm-super/cm-super-t1.enc}</usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi12.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi6.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi8.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy8.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb></usr/share/texmf/fonts/type1/public/cm-super/sfbi1200.pfb></usr/share/texmf/fonts/type1/public/cm-super/sfbi1440.pfb></usr/share/texmf/fonts/type1/public/cm-super/sfbx1095.pfb></usr/share/texmf/fonts/type1/public/cm-super/sfbx1200.pfb></usr/share/texmf/fonts/type1/public/cm-super/sfbx1440.pfb></usr/share/texmf/fonts/type1/public/cm-super/sfrm0800.pfb></usr/share/texmf/fonts/type1/public/cm-super/sfrm1095.pfb></usr/share/texmf/fonts/type1/public/cm-super/sfrm1200.pfb></usr/share/texmf/fonts/type1/public/cm-super/sfrm1728.pfb></usr/share/texmf/fonts/type1/public/cm-super/sfti1095.pfb></usr/share/texmf/fonts/type1/public/cm-super/sftt1095.pfb></usr/share/texmf/fonts/type1/public/cm-super/sftt1200.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/stmaryrd/stmary10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/stmaryrd/stmary8.pfb>
+Output written on /home/bruno/RO/RO_project/rapport.pdf (8 pages, 610256 bytes).
 PDF statistics:
- 131 PDF objects out of 1000 (max. 8388607)
- 85 compressed objects within 1 object stream
+ 147 PDF objects out of 1000 (max. 8388607)
+ 94 compressed objects within 1 object stream
  0 named destinations out of 1000 (max. 500000)
- 36 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 46 words of extra memory for PDF output out of 10000 (max. 10000000)
 

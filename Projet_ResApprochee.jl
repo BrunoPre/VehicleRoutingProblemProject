@@ -7,7 +7,6 @@
 
 using JuMP, GLPK
 using TravelingSalesmanExact # pour des fonctions du problème du voyageur de commerce
-using Test #Pour faire les tests
 
 # Structure contenant les données du problème
 mutable struct donnees
@@ -226,40 +225,7 @@ function calcLengthOfCycle(cycle::Vector{Int64}, d::Matrix{Int64})
     return sum
 end
 
-# fonction de test (hors-sujet)
-function test()
-    #First test all subsets and respective shortest distances
-    data::donnees = lecture_donnees("A/VRPA15.dat") # fichier dans le même dossier (cf ex. du sujet)
-    d::Matrix{Int64} = data.distance
-    capa::Int64 = data.capacite
-    dmd::Vector{Int64} = data.demande
-    nbClients::Int64 = data.nbClients
-
-    G::Vector{Tuple{Tuple{Int64,Int64},Int64}} = calcGainVector(d)
-    println(G)
-    print(sortVector(G))
-
-    G = sortVector(G)
-    println(G)
-    println()
-    
-    sol::Vector{Tuple{Vector{Int64},Int64}}= initialiserChemins(dmd)
-    print(sol)
-    println()
-
-
-    solution::Vector{Tuple{Vector{Int64},Int64}}= getAllFusionnedCycles(G,sol, dmd,capa)
-    println(solution)
-    println("Les resultats sont")
-    for sol in solution
-        if (sol[2]==0)
-            println()
-            println(sol[1])
-        end
-    end
-end
-
-# fonction de prise des données et de résolution
+# Fonction à exécuter dans le REPL : fonction de prise des données et de résolution
 function data_then_solve_appr(filename::String)
     # Conversion fichier -> structures de données
     data::donnees = lecture_donnees(filename)
